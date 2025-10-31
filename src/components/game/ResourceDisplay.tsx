@@ -1,12 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import type { ResourceId } from "@/lib/game-data";
 import { Leaf, Users, Shield, CircleDollarSign } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Resources = Record<ResourceId, number>;
 
 interface ResourceDisplayProps {
   resources: Resources;
+  effects: Partial<Record<ResourceId, number>>;
 }
 
 const resourceIcons: Record<ResourceId, React.ElementType> = {
@@ -16,16 +19,51 @@ const resourceIcons: Record<ResourceId, React.ElementType> = {
   money: CircleDollarSign,
 };
 
+const EffectIndicator = ({ effect }: { effect: number }) => {
+  const change = Math.sign(effect);
+  const magnitude = Math.min(Math.ceil(Math.abs(effect) / 10), 4);
 
-export default function ResourceDisplay({ resources }: ResourceDisplayProps) {
+  if (change === 0) return null;
+
+  return (
+    <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex flex-col gap-0.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+      {Array.from({ length: magnitude }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "w-1 h-1 rounded-full",
+            change > 0 ? "bg-primary" : "bg-destructive"
+          )}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default function ResourceDisplay({ resources, effects }: ResourceDisplayProps) {
+  const [currentEffects, setCurrentEffects] = useState<Partial<Record<ResourceId, number>>>({});
+
+  useEffect(() => {
+    if (Object.keys(effects).length > 0) {
+      setCurrentEffects(effects);
+      const timer = setTimeout(() => {
+        setCurrentEffects({});
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [effects]);
+
   return (
     <div className="flex justify-center items-center gap-6 w-full">
       {(Object.keys(resources) as ResourceId[]).map((id) => {
         const Icon = resourceIcons[id];
         const value = resources[id];
         const dotCount = Math.ceil(value / 10);
+        const effect = currentEffects[id];
+
         return (
-          <div key={id} className="flex flex-col items-center gap-2">
+          <div key={id} className="relative flex flex-col items-center gap-2">
+            {effect && <EffectIndicator effect={effect} />}
             <Icon className="w-7 h-7 text-primary" aria-label={`${id} icon`} />
             <div className="flex flex-col-reverse gap-1">
               {Array.from({ length: 10 }).map((_, i) => (

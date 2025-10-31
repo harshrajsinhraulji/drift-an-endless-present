@@ -33,6 +33,7 @@ export default function GameContainer() {
   const [gameOver, setGameOver] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [lastEffects, setLastEffects] = useState<Partial<Record<ResourceId, number>>>({});
 
   useEffect(() => {
     setIsClient(true);
@@ -50,10 +51,13 @@ export default function GameContainer() {
     setCurrentCardIndex(0);
     setGameOver(false);
     setGameOverMessage("");
+    setLastEffects({});
   }, []);
 
   const handleChoice = (choice: Choice) => {
     if (gameOver) return;
+
+    setLastEffects(choice.effects);
 
     let newResources = { ...resources };
     let gameOverTrigger = false;
@@ -105,7 +109,7 @@ export default function GameContainer() {
 
   return (
     <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameOver ? "opacity-30" : "opacity-100")}>
-      <ResourceDisplay resources={resources} />
+      <ResourceDisplay resources={resources} effects={lastEffects} />
       <NarrativeCard
         key={currentCard.id}
         card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
