@@ -74,7 +74,11 @@ export default function GameContainer() {
     const shuffledSpecialEvents = shuffleArray(specialEventCards);
     const regularCards = gameCards.filter(c => !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
-    setDeck([...shuffledSpecialEvents, ...shuffledMainDeck]);
+    
+    // Make sure creator card is not in deck unless triggered
+    const filteredDeck = gameCards.filter(c => !c.isSpecial);
+    
+    setDeck(shuffleArray(filteredDeck));
     setCurrentCardIndex(0);
     setGameState("playing");
     setGameOverMessage("");
@@ -118,7 +122,7 @@ export default function GameContainer() {
       localStorage.setItem(SAVE_GAME_KEY, JSON.stringify(saveState));
       setHasSave(true);
     }
-     if (isClient && gameState === "title") {
+     if (isClient && (gameState === "title" || gameState === "gameover")) {
       localStorage.removeItem(SAVE_GAME_KEY);
       setHasSave(false);
     }
@@ -186,7 +190,7 @@ export default function GameContainer() {
       });
       setGameState('playing');
       setLastEffects({});
-      setCurrentCardIndex(getNextCard());
+      startNewGame(); // Restart the deck
     } else {
       setGameState("gameover");
     }
@@ -244,6 +248,14 @@ export default function GameContainer() {
         }
     }
 
+    if (year > 10 && !storyFlags.has('creator_linkedin_prescience') && Math.random() < 0.2) {
+      const creatorCard = gameCards.find(c => c.id === 303);
+      if(creatorCard) {
+        setDeck(prev => [creatorCard, ...prev.slice(currentCardIndex +1)]);
+        setCurrentCardIndex(0);
+        return;
+      }
+    }
 
     if (gameOverTrigger) {
       setGameOverMessage(message);

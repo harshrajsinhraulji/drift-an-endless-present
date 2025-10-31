@@ -93,7 +93,7 @@ export const gameCards: CardData[] = [
       },
     ],
   },
-  {
+    {
     id: 6,
     character: "Chief Architect",
     imageId: "char-architect",
@@ -325,8 +325,6 @@ export const gameCards: CardData[] = [
       },
     ],
     isSpecial: true,
-    requiredFlags: ["creator_github_mercy"],
-    blockedByFlags: ["creator_linkedin_prescience"],
   },
 ];
 

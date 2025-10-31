@@ -150,8 +150,8 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
 
   const cardOpacity = isAnimatingOut ? 0 : 1;
 
-  const leftChoiceOpacity = Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75)));
-  const rightChoiceOpacity = Math.max(0, Math.min(1, dragX / (dragThreshold * 0.75)));
+  const leftChoiceOpacity = isDragging ? Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75))) : 1;
+  const rightChoiceOpacity = isDragging ? Math.max(0, Math.min(1, dragX / (dragThreshold * 0.75))) : 1;
 
 
   return (
@@ -178,7 +178,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
         style={{...cardStyle, opacity: cardOpacity}}
         className={cn(
           "w-full h-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
-          isDragging ? "" : "transition-all",
+          isDragging ? "" : "transition-transform",
         )}
       >
         <Card className="w-full max-w-sm h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col">
