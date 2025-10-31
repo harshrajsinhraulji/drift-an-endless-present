@@ -1,7 +1,10 @@
 
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import SettingsDialog from "./SettingsDialog";
+import { Settings } from "lucide-react";
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -10,6 +13,8 @@ interface TitleScreenProps {
 }
 
 export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScreenProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl animate-in fade-in-0 duration-500">
       <div className="flex flex-col items-center gap-2">
@@ -25,7 +30,11 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
         <Button onClick={onStart} className="w-full font-headline text-xl" variant="outline">
           {hasSave ? "New Game" : "Begin"}
         </Button>
+         <Button onClick={() => setIsSettingsOpen(true)} className="w-full font-headline text-xl" variant="ghost">
+            Settings
+          </Button>
       </div>
+      <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }

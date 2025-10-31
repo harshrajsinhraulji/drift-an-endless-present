@@ -1,12 +1,13 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useContext } from "react";
 import Image from "next/image";
 import type { CardData, Choice, ResourceId } from "@/lib/game-data";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Leaf, Users, Shield, CircleDollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+import { SoundContext } from "@/contexts/SoundContext";
 
 interface NarrativeCardProps {
   card: CardData & { image: string, imageHint: string };
@@ -60,18 +61,22 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
   const [startX, setStartX] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const { sfxVolume } = useContext(SoundContext);
 
   const dragThreshold = 80;
 
   const handleChoiceMade = useCallback((choice: Choice) => {
-    const audio = new Audio('/assets/sounds/card.mp3');
-    audio.play().catch(e => console.error("Error playing sound:", e));
+    if (sfxVolume > 0) {
+      const audio = new Audio('/assets/sounds/card.mp3');
+      audio.volume = sfxVolume;
+      audio.play().catch(e => console.error("Error playing sound:", e));
+    }
     setIsAnimatingOut(true);
     // The onChoice will be called after the animation finishes in the handleDragEnd or handleKeyDown
     setTimeout(() => {
         onChoice(choice);
     }, 300);
-  }, [onChoice]);
+  }, [onChoice, sfxVolume]);
 
   const handleDragStart = (clientX: number) => {
     if (isAnimatingOut) return;

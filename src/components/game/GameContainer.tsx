@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import type { ResourceId, CardData, Choice, StoryFlag } from "@/lib/game-data";
 import { gameCards, specialEventCards, INITIAL_RESOURCE_VALUE, gameOverConditions, getCardText } from "@/lib/game-data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -13,6 +13,7 @@ import StoryProgressDialog from "./StoryProgressDialog";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Eye } from "lucide-react";
+import { SoundContext } from "@/contexts/SoundContext";
 
 
 type Resources = Record<ResourceId, number>;
@@ -57,6 +58,7 @@ export default function GameContainer() {
   const [prescienceCharges, setPrescienceCharges] = useState(0);
   const [showPrescienceThisTurn, setShowPrescienceThisTurn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { bgmVolume } = useContext(SoundContext);
 
 
   useEffect(() => {
@@ -72,13 +74,14 @@ export default function GameContainer() {
   
   useEffect(() => {
     if (audioRef.current) {
-      if (gameState === 'playing') {
+      if (gameState === 'playing' && bgmVolume > 0) {
+        audioRef.current.volume = bgmVolume;
         audioRef.current.play().catch(e => console.error("Error playing background music:", e));
       } else {
         audioRef.current.pause();
       }
     }
-  }, [gameState]);
+  }, [gameState, bgmVolume]);
 
   const startNewGame = useCallback(() => {
     setResources({
