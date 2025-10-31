@@ -3,7 +3,11 @@ export type StoryFlag =
   | "studied_star" 
   | "met_astronomer"
   | "creator_github_mercy"
-  | "creator_linkedin_prescience";
+  | "creator_linkedin_prescience"
+  | "plague_allowed_ship"
+  | "plague_started"
+  | "plague_cured_by_sacrifice"
+  | "plague_cured_by_isolation";
 
 export interface Choice {
   text: string;
@@ -317,6 +321,78 @@ export const gameCards: CardData[] = [
     ],
   },
   {
+    id: 17,
+    character: "Merchant Captain",
+    imageId: "char-merchant",
+    text: "A ship from a distant, plagued land requests to dock. Their cargo is valuable, but they carry risk.",
+    choices: [
+      {
+        text: "Allow them to dock.",
+        effects: { money: 20, people: -5 },
+        setFlag: "plague_allowed_ship"
+      },
+      {
+        text: "Turn them away.",
+        effects: { money: -5, army: 5 },
+      },
+    ],
+    blockedByFlags: ["plague_started"]
+  },
+  {
+    id: 18,
+    character: "Plague Doctor",
+    imageId: "char-plaguedoctor",
+    text: "The sickness spreads. I can devise a cure, but it requires a rare, toxic flower that will poison the rivers.",
+    choices: [
+      {
+        text: "The sacrifice is necessary.",
+        effects: { people: 30, environment: -30 },
+        setFlag: "plague_cured_by_sacrifice"
+      },
+      {
+        text: "Find another way.",
+        effects: { people: -10 },
+      },
+    ],
+    requiredFlags: ["plague_started"],
+    blockedByFlags: ["plague_cured_by_sacrifice", "plague_cured_by_isolation"]
+  },
+  {
+    id: 19,
+    character: "Quarantine Guard",
+    imageId: "char-guard",
+    text: "To stop the plague, we must lock the sick in their homes. It is brutal, but it will work.",
+    choices: [
+      {
+        text: "Enforce the quarantine.",
+        effects: { people: -20, army: 10 },
+        setFlag: "plague_cured_by_isolation"
+      },
+      {
+        text: "Show mercy.",
+        effects: { people: 5, army: -5 },
+      },
+    ],
+    requiredFlags: ["plague_started"],
+    blockedByFlags: ["plague_cured_by_sacrifice", "plague_cured_by_isolation"]
+  },
+  {
+    id: 20,
+    character: "Royal Spy",
+    imageId: "char-spy",
+    text: "I have uncovered a plot against you within the court. We can expose the traitors publicly or... arrange for them to disappear.",
+    choices: [
+      {
+        text: "Public trials for the traitors.",
+        effects: { people: 10, army: -5 },
+      },
+      {
+        text: "Make them disappear.",
+        effects: { people: -10, army: 10 },
+      },
+    ],
+  },
+  {
     id: 201,
     character: "Lead Astronomer",
     imageId: "char-astronomer",
@@ -409,6 +485,25 @@ export const specialEventCards: CardData[] = [
       },
     ],
     isSpecial: true,
+  },
+  {
+    id: 104,
+    character: "Oracle",
+    imageId: "char-oracle",
+    text: "A terrible sickness festers in a distant land. It travels on the winds and the water. Heed my warning, Pharaoh.",
+    choices: [
+      {
+        text: "Prepare the kingdom.",
+        effects: { army: 10, money: -10 },
+        setFlag: "plague_started",
+      },
+      {
+        text: "This is but a prophecy.",
+        effects: { people: 5 },
+      },
+    ],
+    isSpecial: true,
+    blockedByFlags: ["plague_started"]
   }
 ]
 
@@ -429,4 +524,8 @@ export const storyFlagDescriptions: Record<StoryFlag, string> = {
   met_astronomer: "You have consulted with the royal astronomers.",
   creator_github_mercy: "The Creator, Harshrajsinh Raulji, granted you a second chance.",
   creator_linkedin_prescience: "The Creator, Harshrajsinh Raulji, gave you the gift of foresight.",
+  plague_allowed_ship: "You allowed a suspicious ship to dock, bringing wealth and risk.",
+  plague_started: "A dreadful plague has begun to spread through your kingdom.",
+  plague_cured_by_sacrifice: "You sacrificed the health of your rivers to find a cure for the plague.",
+  plague_cured_by_isolation: "You contained the plague with brutal quarantine measures, at great cost to your people.",
 }

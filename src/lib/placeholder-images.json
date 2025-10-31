@@ -77,6 +77,36 @@
       "description": "A thoughtful philosopher who dares to ask if the kingdom is built on foundations of sand.",
       "imageUrl": "https://images.unsplash.com/photo-1629097666037-bacf8a44da14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3aXNlJTIwdGhpbmtlcnxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "wise thinker"
+    },
+    {
+      "id": "char-merchant",
+      "description": "A pragmatic merchant captain, whose ship carries both treasure and unseen dangers from afar.",
+      "imageUrl": "https://images.unsplash.com/photo-1621375323282-5954b6c86729?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhbmNpZW50JTIwbWFyaW5lcnxlbnwwfHx8fDE3NjIyNDg0ODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient mariner"
+    },
+    {
+      "id": "char-plaguedoctor",
+      "description": "The Plague Doctor, a figure shrouded in mystery, whose cures are as fearsome as the disease.",
+      "imageUrl": "https://images.unsplash.com/photo-1589133829539-00913988ed45?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwbGFndWUlMjBkb2N0b3J8ZW58MHx8fHwxNzYyMjQ4NDg3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "plague doctor"
+    },
+    {
+      "id": "char-guard",
+      "description": "The Quarantine Guard, a stoic enforcer of last resort, whose duty is to the many over the few.",
+      "imageUrl": "https://images.unsplash.com/photo-1617304217112-077db4a45041?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhbmNpZW50JTIwZ3VhcmR8ZW58MHx8fHwxNzYyMjQ4NDg3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient guard"
+    },
+    {
+      "id": "char-spy",
+      "description": "The Royal Spy, who moves through the palace like a whisper, dealing in secrets and shadows.",
+      "imageUrl": "https://images.unsplash.com/photo-1594153785839-009bbb67b8b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzaGFkb3d5JTIwZmlndXJlfGVufDB8fHx8MTc2MTkyMjA5N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shadowy figure"
+    },
+    {
+      "id": "char-oracle",
+      "description": "An ancient Oracle whose visions are as murky and treacherous as the future itself.",
+      "imageUrl": "https://images.unsplash.com/photo-1617757960395-cf6f88aebe53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmZW1hbGUlMjBwcm9waGV0fGVufDB8fHx8MTc2MjI0ODYwNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "female prophet"
     }
   ]
 }
