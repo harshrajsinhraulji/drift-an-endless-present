@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -25,7 +26,7 @@ const flagDescriptions: Record<StoryFlag, string> = {
 export default function StoryProgressDialog({ isOpen, onClose, flags }: StoryProgressDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-primary text-center">Story Memories</DialogTitle>
           <DialogDescription className="text-lg text-foreground/80 pt-4 text-center">

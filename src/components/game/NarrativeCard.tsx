@@ -181,7 +181,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
           isDragging ? "" : "transition-transform",
         )}
       >
-        <Card className="w-full max-w-sm h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col">
+        <Card className="w-full h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col">
           <div className="relative h-24 w-full">
             <div className="absolute inset-0 bg-gradient-to-b from-card via-card/80 to-transparent z-10" />
           </div>
