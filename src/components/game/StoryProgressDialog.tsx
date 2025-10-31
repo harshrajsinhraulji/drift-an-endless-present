@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { StoryFlag } from "@/lib/game-data";
-import { Badge } from "../ui/badge";
 
 interface StoryProgressDialogProps {
   isOpen: boolean;
@@ -17,7 +16,8 @@ interface StoryProgressDialogProps {
 }
 
 const flagDescriptions: Record<StoryFlag, string> = {
-    studied_star: "You chose to study the fallen star, unlocking cosmic secrets."
+    studied_star: "You chose to study the fallen star, unlocking cosmic secrets.",
+    met_astronomer: "You have consulted with the royal astronomers.",
 }
 
 export default function StoryProgressDialog({ isOpen, onClose, flags }: StoryProgressDialogProps) {

@@ -10,7 +10,6 @@ import GameOverDialog from "./GameOverDialog";
 import TitleScreen from "./TitleScreen";
 import StoryProgressDialog from "./StoryProgressDialog";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "../ui/button";
 
 
@@ -116,40 +115,64 @@ export default function GameContainer() {
     setStoryFlags(new Set());
   }, []);
 
-  const getNextCardIndex = (currentIndex: number, currentDeck: CardData[], currentFlags: StoryFlags): number => {
-    let nextIndex = currentIndex + 1;
-
-    // Check for story-specific cards
-    const potentialStoryCards = gameCards.filter(
-        card => card.requiredFlags && card.requiredFlags.every(flag => currentFlags.has(flag)) && !currentDeck.some(dCard => dCard.id === card.id)
-    );
-
-    if (potentialStoryCards.length > 0) {
-        // For simplicity, we're just adding the first one found.
-        // A more complex system might have priorities or multiple insertions.
-        const storyCard = potentialStoryCards[0];
-        // Insert the story card into the deck to be the next card
-        const newDeck = [...currentDeck.slice(0, currentIndex + 1), storyCard, ...currentDeck.slice(currentIndex + 1)];
-        setDeck(newDeck);
-        return currentIndex + 1;
+  const getNextCard = () => {
+    let potentialDeck = [...deck];
+    let potentialIndex = currentCardIndex + 1;
+  
+    // Function to check if a card is valid to be drawn
+    const isCardValid = (card: CardData, flags: StoryFlags, currentDeck: CardData[]) => {
+      const alreadyInDeck = currentDeck.some(dCard => dCard.id === card.id);
+      const requiredFlagsMet = !card.requiredFlags || card.requiredFlags.every(flag => flags.has(flag));
+      const blockedByFlagsMet = !card.blockedByFlags || !card.blockedByFlags.some(flag => flags.has(flag));
+      return !alreadyInDeck && requiredFlagsMet && blockedByFlagsMet;
+    };
+  
+    // Check for story-specific cards that should be injected
+    const storyCardsToInject = gameCards.filter(card => isCardValid(card, storyFlags, deck));
+  
+    if (storyCardsToInject.length > 0) {
+      // Inject the first valid story card to be the next one
+      const newDeck = [...deck.slice(0, potentialIndex), storyCardsToInject[0], ...deck.slice(potentialIndex)];
+      setDeck(newDeck);
+      return potentialIndex;
     }
-
-    if (nextIndex >= currentDeck.length) {
-      // Reshuffle main deck and append it. Don't re-add special events.
-      const newShuffledMainDeck = shuffleArray(gameCards.filter(c => !c.requiredFlags));
-      setDeck([...currentDeck, ...newShuffledMainDeck]);
+  
+    // If no story card, or we are at the end of the deck, reshuffle and continue
+    if (potentialIndex >= potentialDeck.length) {
+      const seenCardIds = new Set(potentialDeck.map(c => c.id));
+      const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c));
+      const newShuffledMainDeck = shuffleArray(unseenMainCards.length > 0 ? unseenMainCards : gameCards.filter(c => !c.isSpecial && !c.requiredFlags));
+      
+      const newDeck = [...potentialDeck, ...newShuffledMainDeck];
+      setDeck(newDeck);
     }
     
-    return nextIndex;
+    // Make sure the next card is valid with the current flags
+    while(potentialDeck[potentialIndex] && potentialDeck[potentialIndex].blockedByFlags?.some(flag => storyFlags.has(flag))) {
+        potentialIndex++;
+        if (potentialIndex >= potentialDeck.length) {
+             const seenCardIds = new Set(potentialDeck.map(c => c.id));
+             const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c));
+             const newShuffledMainDeck = shuffleArray(unseenMainCards.length > 0 ? unseenMainCards : gameCards.filter(c => !c.isSpecial && !c.requiredFlags));
+      
+            const newDeck = [...potentialDeck, ...newShuffledMainDeck];
+            setDeck(newDeck);
+        }
+    }
+
+    return potentialIndex;
   };
+
 
   const handleChoice = (choice: Choice) => {
     if (gameState !== 'playing') return;
 
     setLastEffects(choice.effects);
 
+    const newStoryFlags = new Set(storyFlags);
     if (choice.setFlag) {
-      setStoryFlags(prev => new Set(prev).add(choice.setFlag as StoryFlag));
+      newStoryFlags.add(choice.setFlag);
+      setStoryFlags(newStoryFlags);
     }
 
     let newResources = { ...resources };
@@ -192,7 +215,7 @@ export default function GameContainer() {
       setGameOverMessage(message);
       if(isClient) localStorage.removeItem(SAVE_GAME_KEY);
     } else {
-       setCurrentCardIndex(prev => getNextCardIndex(prev, deck, new Set(storyFlags).add(choice.setFlag as StoryFlag)));
+       setCurrentCardIndex(getNextCard());
     }
   };
 

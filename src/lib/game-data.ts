@@ -1,5 +1,5 @@
 export type ResourceId = "environment" | "people" | "army" | "money";
-export type StoryFlag = "studied_star";
+export type StoryFlag = "studied_star" | "met_astronomer";
 
 export interface Choice {
   text: string;
@@ -15,6 +15,7 @@ export interface CardData {
   choices: [Choice, Choice];
   isSpecial?: boolean; // To identify special event cards
   requiredFlags?: StoryFlag[]; // Card only appears if these flags are set
+  blockedByFlags?: StoryFlag[]; // Card is blocked if these flags are set
 }
 
 export const INITIAL_RESOURCE_VALUE = 50;
@@ -40,7 +41,7 @@ export const gameCards: CardData[] = [
     id: 2,
     character: "High Priest",
     imageId: "char-priest",
-    text: "A strange star has appeared in the sky. The people are frightened. Should we hold a grand ceremony to appease the gods, or consult the astronomers?",
+    text: "A strange celestial body hangs in the sky. The people are frightened. Should we hold a grand ceremony to appease the gods, or consult the astronomers?",
     choices: [
       {
         text: "Hold a ceremony.",
@@ -48,9 +49,11 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Consult the astronomers.",
-        effects: { people: -5, army: 5, environment: 5 },
+        effects: { people: -5, army: 5 },
+        setFlag: "met_astronomer",
       },
     ],
+    blockedByFlags: ["met_astronomer"],
   },
   {
     id: 3,
@@ -165,9 +168,27 @@ export const gameCards: CardData[] = [
     ],
   },
   {
+    id: 11,
+    character: "Lead Astronomer",
+    imageId: "char-astronomer",
+    text: "You summoned me, Pharaoh. The celestial body is no star. It is a vessel. It is waiting.",
+    choices: [
+      {
+        text: "A vessel? For what?",
+        effects: { people: 5, army: 5, environment: 5, money: 5},
+      },
+      {
+        text: "This is nonsense. Leave.",
+        effects: { people: -5 },
+      },
+    ],
+    requiredFlags: ["met_astronomer"],
+    blockedByFlags: ["studied_star"],
+  },
+  {
     id: 201,
     character: "Lead Astronomer",
-    imageId: "char-architect",
+    imageId: "char-astronomer",
     text: "Pharaoh, the star... it speaks. It offers knowledge beyond our comprehension, a power to reshape the world. But it demands a sacrifice to merge with it.",
     choices: [
       {
