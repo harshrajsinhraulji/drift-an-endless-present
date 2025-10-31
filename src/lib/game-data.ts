@@ -1,3 +1,4 @@
+
 export type ResourceId = "environment" | "people" | "army" | "money";
 export type StoryFlag = 
   | "studied_star" 
