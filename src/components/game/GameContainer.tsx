@@ -51,7 +51,7 @@ export default function GameContainer() {
   const [gameOverMessage, setGameOverMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [lastEffects, setLastEffects] = useState<Partial<Record<ResourceId, number>>>({});
-  const [year, setYear] = useState(1);
+  const [year, setYear] = useState(0);
   const [hasSave, setHasSave] = useState(false);
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
@@ -90,14 +90,13 @@ export default function GameContainer() {
       army: INITIAL_RESOURCE_VALUE,
       money: INITIAL_RESOURCE_VALUE,
     });
-    const shuffledSpecialEvents = shuffleArray(specialEventCards);
-    const regularCards = gameCards.filter(c => !c.isSpecial);
+    const tutorialCard = gameCards.find(c => c.id === 0);
+    const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
-    // Make sure creator card is not in deck unless triggered
-    const filteredDeck = gameCards.filter(c => !c.isSpecial);
+    const initialDeck = tutorialCard ? [tutorialCard, ...shuffledMainDeck] : shuffledMainDeck;
     
-    setDeck(shuffleArray(filteredDeck));
+    setDeck(initialDeck);
     setCurrentCardIndex(0);
     setGameState("playing");
     setGameOverMessage("");
@@ -245,7 +244,12 @@ export default function GameContainer() {
     }
     
     setResources(newResources);
-    setYear(y => y + 1);
+    
+    // Don't advance year on tutorial card
+    if (currentCard?.id !== 0) {
+      setYear(y => y + 1);
+    }
+
 
     // Special ending for the star child arc
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
@@ -351,11 +355,11 @@ export default function GameContainer() {
               card={{ ...currentCard, text: cardText, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
               onChoice={handleChoice}
               showPrescience={showPrescienceThisTurn}
-              isFirstTurn={year === 1}
+              isFirstTurn={year === 1 && currentCard.id === 0}
             />
         )}
       </div>
-      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' ? 0 : 1}}>{year}</p>
+      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || currentCard?.id === 0 ? 0 : 1}}>{year}</p>
       <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
        <div className="absolute bottom-4 right-4 flex items-center gap-2">
             {storyFlags.has('creator_linkedin_prescience') && (
