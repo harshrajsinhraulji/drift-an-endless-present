@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -5,12 +6,13 @@ import Image from "next/image";
 import type { CardData, Choice, ResourceId } from "@/lib/game-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Leaf, Users, Shield, CircleDollarSign } from "lucide-react";
+import { Leaf, Users, Shield, CircleDollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface NarrativeCardProps {
   card: CardData & { image: string, imageHint: string };
   onChoice: (choice: Choice) => void;
   showPrescience: boolean;
+  isFirstTurn?: boolean;
 }
 
 const resourceIcons: Record<ResourceId, React.ElementType> = {
@@ -52,14 +54,12 @@ const PrescienceDisplay = ({ effects }: { effects: Partial<Record<ResourceId, nu
 };
 
 
-export default function NarrativeCard({ card, onChoice, showPrescience }: NarrativeCardProps) {
+export default function NarrativeCard({ card, onChoice, showPrescience, isFirstTurn = false }: NarrativeCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [dragX, setDragX] = useState(0);
-  const [choiceText, setChoiceText] = useState("");
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-
 
   const dragThreshold = 80;
 
@@ -81,11 +81,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience }: Narrat
     if (!isDragging || !cardRef.current) return;
     const dx = clientX - startX;
     setDragX(dx);
-    if (Math.abs(dx) > 20) {
-      setChoiceText(dx > 0 ? card.choices[1].text : card.choices[0].text);
-    } else {
-      setChoiceText("");
-    }
   };
 
   const handleDragEnd = () => {
@@ -106,7 +101,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience }: Narrat
     } else {
         // If not dragged far enough, snap back to center
         setDragX(0);
-        setChoiceText("");
     }
   };
 
@@ -116,11 +110,9 @@ export default function NarrativeCard({ card, onChoice, showPrescience }: Narrat
     let choiceIndex: number | null = null;
     if (event.key === 'ArrowLeft') {
       choiceIndex = 0;
-      setChoiceText(card.choices[0].text);
       setDragX(-(dragThreshold + 40));
     } else if (event.key === 'ArrowRight') {
       choiceIndex = 1;
-       setChoiceText(card.choices[1].text);
        setDragX(dragThreshold + 40);
     }
 
@@ -142,7 +134,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience }: Narrat
     if (cardRef.current) {
       cardRef.current.style.transition = 'none'; // No transition on reset
       setDragX(0);
-      setChoiceText("");
       setIsAnimatingOut(false);
       cardRef.current.style.transform = `translateX(0px) rotate(0deg) scale(1)`;
       cardRef.current.style.opacity = '1';
@@ -155,7 +146,10 @@ export default function NarrativeCard({ card, onChoice, showPrescience }: Narrat
   };
 
   const choiceOpacity = Math.min(Math.abs(dragX) / dragThreshold, 1);
-  const cardOpacity = isAnimatingOut ? 0 : 1 - Math.abs(dragX) / (dragThreshold * 2.5);
+  const cardOpacity = isAnimatingOut ? 0 : 1;
+
+  const leftChoiceOpacity = Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75)));
+  const rightChoiceOpacity = Math.max(0, Math.min(1, dragX / (dragThreshold * 0.75)));
 
   const activeChoice = dragX > 0 ? card.choices[1] : card.choices[0];
 
@@ -170,12 +164,26 @@ export default function NarrativeCard({ card, onChoice, showPrescience }: Narrat
         onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
         onTouchEnd={handleDragEnd}
     >
-        {/* Choice overlay text */}
-       <div className="absolute top-4 left-0 right-0 h-16 flex flex-col items-center justify-center transition-opacity duration-200 z-30" style={{ opacity: choiceOpacity }}>
-          <p className="font-headline text-primary text-xl text-center px-4 drop-shadow-lg">{choiceText}</p>
-           {showPrescience && activeChoice && <PrescienceDisplay effects={activeChoice.effects} />}
+      
+      {/* Choice overlays */}
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-24 flex items-center justify-between px-4 pointer-events-none z-30">
+        <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity">
+          <p className="font-headline text-primary text-xl text-center drop-shadow-lg">{card.choices[0].text}</p>
+          {showPrescience && <PrescienceDisplay effects={card.choices[0].effects} />}
+        </div>
+        <div style={{ opacity: rightChoiceOpacity }} className="transition-opacity">
+          <p className="font-headline text-primary text-xl text-center drop-shadow-lg">{card.choices[1].text}</p>
+          {showPrescience && <PrescienceDisplay effects={card.choices[1].effects} />}
+        </div>
       </div>
       
+      {isFirstTurn && (
+        <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
+          <ChevronLeft className="w-10 h-10 text-primary/30 animate-pulse-subtle -ml-2" />
+          <ChevronRight className="w-10 h-10 text-primary/30 animate-pulse-subtle -mr-2" />
+        </div>
+      )}
+
       <div 
         ref={cardRef} 
         style={{...cardStyle, opacity: cardOpacity}}

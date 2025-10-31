@@ -71,9 +71,9 @@ export default function GameContainer() {
       army: INITIAL_RESOURCE_VALUE,
       money: INITIAL_RESOURCE_VALUE,
     });
-    // Shuffle main cards and prepend shuffled special event cards
     const shuffledSpecialEvents = shuffleArray(specialEventCards);
-    const shuffledMainDeck = shuffleArray(gameCards.filter(c => !c.requiredFlags && !c.isSpecial));
+    const regularCards = gameCards.filter(c => !c.isSpecial);
+    const shuffledMainDeck = shuffleArray(regularCards);
     setDeck([...shuffledSpecialEvents, ...shuffledMainDeck]);
     setCurrentCardIndex(0);
     setGameState("playing");
@@ -134,7 +134,7 @@ export default function GameContainer() {
       const alreadyInDeck = deck.some(dCard => dCard.id === card.id);
       const requiredFlagsMet = !card.requiredFlags || card.requiredFlags.every(flag => storyFlags.has(flag));
       const blockedByFlagsMet = !card.blockedByFlags || !card.blockedByFlags.some(flag => storyFlags.has(flag));
-      return !alreadyInDeck && requiredFlagsMet && blockedByFlagsMet;
+      return !alreadyInDeck && requiredFlagsMet && blockedByFlagsMet && !card.isSpecial;
     };
   
     // Check for story-specific cards that should be injected
@@ -158,7 +158,7 @@ export default function GameContainer() {
     }
     
     // Make sure the next card is valid with the current flags
-    while(potentialDeck[potentialIndex] && potentialDeck[potentialIndex].blockedByFlags?.some(flag => storyFlags.has(flag))) {
+    while(potentialDeck[potentialIndex] && (potentialDeck[potentialIndex].blockedByFlags?.some(flag => storyFlags.has(flag)) || potentialDeck[potentialIndex].isSpecial)) {
         potentialIndex++;
         if (potentialIndex >= potentialDeck.length) {
              const seenCardIds = new Set(potentialDeck.map(c => c.id));
@@ -318,6 +318,7 @@ export default function GameContainer() {
               card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
               onChoice={handleChoice}
               showPrescience={showPrescienceThisTurn}
+              isFirstTurn={year === 1}
             />
         )}
       </div>
