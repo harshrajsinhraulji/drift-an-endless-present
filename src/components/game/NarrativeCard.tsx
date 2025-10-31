@@ -156,7 +156,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
 
   return (
     <div 
-        className="w-full h-[470px] relative cursor-grab active:cursor-grabbing group"
+        className="w-full h-[470px] relative cursor-grab active:cursor-grabbing group select-none"
         onMouseDown={(e) => handleDragStart(e.clientX)}
         onMouseMove={(e) => handleDragMove(e.clientX)}
         onMouseUp={handleDragEnd}
