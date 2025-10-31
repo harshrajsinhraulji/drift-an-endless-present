@@ -28,7 +28,7 @@ export default function GameOverDialog({ isOpen, message, onRestart }: GameOverD
         </AlertDialogHeader>
         <AlertDialogFooter>
           <Button onClick={onRestart} className="w-full font-headline text-lg" variant="outline">
-            Again
+            Return to Title
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

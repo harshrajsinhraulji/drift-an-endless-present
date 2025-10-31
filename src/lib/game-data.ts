@@ -11,6 +11,7 @@ export interface CardData {
   imageId: string;
   text: string;
   choices: [Choice, Choice];
+  isSpecial?: boolean; // To identify special event cards
 }
 
 export const INITIAL_RESOURCE_VALUE = 50;
@@ -77,22 +78,6 @@ export const gameCards: CardData[] = [
       {
         text: "Distribute it to the people.",
         effects: { money: -10, people: 15 },
-      },
-    ],
-  },
-  {
-    id: 5,
-    character: "Mysterious Stranger",
-    imageId: "char-stranger",
-    text: "I offer you a glimpse of the future, a device that can predict the harvest. It will make your kingdom prosperous, but its power is not without cost.",
-    choices: [
-      {
-        text: "Accept the device.",
-        effects: { money: 20, environment: 10, army: -5, people: -5 },
-      },
-      {
-        text: "Refuse his offer.",
-        effects: { army: 5 },
       },
     ],
   },
@@ -177,6 +162,61 @@ export const gameCards: CardData[] = [
     ],
   },
 ];
+
+
+export const specialEventCards: CardData[] = [
+    {
+    id: 101,
+    character: "Mysterious Stranger",
+    imageId: "char-stranger",
+    text: "I offer you a glimpse of the future, a device that can predict the harvest. It will make your kingdom prosperous, but its power is not without cost.",
+    choices: [
+      {
+        text: "Accept the device.",
+        effects: { money: 25, environment: 15, army: -10, people: -10 },
+      },
+      {
+        text: "Refuse his offer.",
+        effects: { army: 5 },
+      },
+    ],
+    isSpecial: true,
+  },
+  {
+    id: 102,
+    character: "The Creator",
+    imageId: "char-creator",
+    text: "A great flood is coming. I can save your people, but you must cede all authority to me for one cycle. Trust me, or trust your own strength?",
+    choices: [
+        {
+            text: "I trust you.",
+            effects: { people: 40, army: -20, money: -20, environment: -20},
+        },
+        {
+            text: "We will save ourselves.",
+            effects: { people: -30, environment: -30},
+        }
+    ],
+    isSpecial: true,
+  },
+  {
+    id: 103,
+    character: "Fallen Star",
+    imageId: "char-creator",
+    text: "A star has fallen from the sky, landing in the desert. It radiates a strange energy. Should we study it or destroy it?",
+    choices: [
+      {
+        text: "Study the star.",
+        effects: { environment: 20, people: -10, money: -10, army: 10 },
+      },
+      {
+        text: "Destroy it.",
+        effects: { army: -15, people: 10 },
+      },
+    ],
+    isSpecial: true,
+  }
+]
 
 export const gameOverConditions: Record<string, string> = {
   environment_low: "The land has withered and can no longer sustain your people. Your reign ends in famine.",

@@ -16,6 +16,7 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [dragX, setDragX] = useState(0);
+  const [choiceText, setChoiceText] = useState("");
 
   const dragThreshold = 80;
 
@@ -42,6 +43,11 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
     if (!isDragging || !cardRef.current) return;
     const dx = clientX - startX;
     setDragX(dx);
+    if (Math.abs(dx) > 20) {
+      setChoiceText(dx > 0 ? card.choices[1].text : card.choices[0].text);
+    } else {
+      setChoiceText("");
+    }
   };
 
   const handleDragEnd = () => {
@@ -60,6 +66,7 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
     } else {
         // If not dragged far enough, snap back to center
         setDragX(0);
+        setChoiceText("");
     }
   };
 
@@ -70,9 +77,11 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
     if (event.key === 'ArrowLeft') {
       choiceIndex = 0;
       setDragX(-(dragThreshold + 20)); // Move past threshold to trigger animation
+      setChoiceText(card.choices[0].text);
     } else if (event.key === 'ArrowRight') {
       choiceIndex = 1;
       setDragX(dragThreshold + 20); // Move past threshold to trigger animation
+       setChoiceText(card.choices[1].text);
     }
 
     if (choiceIndex !== null && cardRef.current) {
@@ -91,6 +100,7 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   // Reset card component state when card changes
   useEffect(() => {
     setDragX(0);
+    setChoiceText("");
     if(cardRef.current) {
       cardRef.current.style.transform = `translateX(0px) rotate(0deg) scale(1)`;
       cardRef.current.style.opacity = '1';
@@ -102,8 +112,7 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
     transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
   };
 
-  const leftChoiceOpacity = dragX < 0 ? Math.min(Math.abs(dragX) / dragThreshold, 1) : 0;
-  const rightChoiceOpacity = dragX > 0 ? Math.min(dragX / dragThreshold, 1) : 0;
+  const choiceOpacity = Math.min(Math.abs(dragX) / dragThreshold, 1);
   const cardOpacity = 1 - Math.abs(dragX) / (dragThreshold * 2);
 
   return (
@@ -117,19 +126,16 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
         onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
         onTouchEnd={handleDragEnd}
     >
-        {/* Choice overlays */}
-       <div className="absolute top-1/2 left-4 transform -translate-y-1/2 p-4 border-2 border-primary/80 rounded-md bg-card/80 backdrop-blur-sm shadow-lg" style={{ opacity: leftChoiceOpacity, transition: 'opacity 0.2s' }}>
-          <p className="font-body text-primary text-lg">{card.choices[0].text}</p>
-      </div>
-      <div className="absolute top-1/2 right-4 transform -translate-y-1/2 p-4 border-2 border-primary/80 rounded-md bg-card/80 backdrop-blur-sm shadow-lg" style={{ opacity: rightChoiceOpacity, transition: 'opacity 0.2s' }}>
-          <p className="font-body text-primary text-lg">{card.choices[1].text}</p>
+        {/* Choice overlay text */}
+       <div className="absolute top-4 left-0 right-0 h-16 flex items-center justify-center transition-opacity duration-200" style={{ opacity: choiceOpacity }}>
+          <p className="font-headline text-primary text-xl text-center px-4">{choiceText}</p>
       </div>
       
       <div 
         ref={cardRef} 
         style={cardStyle} 
         className={cn(
-          "w-full absolute animate-in fade-in-0 zoom-in-95 duration-300 transition-transform group-hover:scale-105",
+          "w-full absolute animate-in fade-in-0 zoom-in-95 duration-300 transition-transform group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
           isDragging ? "" : "transition-all",
         )}
       >

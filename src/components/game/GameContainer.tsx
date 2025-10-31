@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { ResourceId, CardData, Choice } from "@/lib/game-data";
-import { gameCards, INITIAL_RESOURCE_VALUE, gameOverConditions } from "@/lib/game-data";
+import { gameCards, specialEventCards, INITIAL_RESOURCE_VALUE, gameOverConditions } from "@/lib/game-data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ResourceDisplay from "./ResourceDisplay";
 import NarrativeCard from "./NarrativeCard";
 import GameOverDialog from "./GameOverDialog";
+import TitleScreen from "./TitleScreen";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+
 
 type Resources = Record<ResourceId, number>;
+type GameState = "title" | "playing" | "gameover";
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -21,6 +25,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return newArray;
 };
 
+const SAVE_GAME_KEY = "lapse-save-game";
+
 export default function GameContainer() {
   const [resources, setResources] = useState<Resources>({
     environment: INITIAL_RESOURCE_VALUE,
@@ -30,34 +36,74 @@ export default function GameContainer() {
   });
   const [deck, setDeck] = useState<CardData[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
+  const [gameState, setGameState] = useState<GameState>("title");
   const [gameOverMessage, setGameOverMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [lastEffects, setLastEffects] = useState<Partial<Record<ResourceId, number>>>({});
   const [year, setYear] = useState(1);
+  const [hasSave, setHasSave] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    startGame();
+    if (localStorage.getItem(SAVE_GAME_KEY)) {
+      setHasSave(true);
+    }
   }, []);
 
-  const startGame = useCallback(() => {
+  useEffect(() => {
+    if (isClient && gameState === "playing") {
+      const saveState = {
+        resources,
+        deck,
+        currentCardIndex,
+        year,
+      };
+      localStorage.setItem(SAVE_GAME_KEY, JSON.stringify(saveState));
+      setHasSave(true);
+    }
+     if (isClient && gameState === "title") {
+      localStorage.removeItem(SAVE_GAME_KEY);
+      setHasSave(false);
+    }
+  }, [resources, deck, currentCardIndex, year, gameState, isClient]);
+
+  const loadGame = useCallback(() => {
+    if (!isClient) return;
+    const savedState = localStorage.getItem(SAVE_GAME_KEY);
+    if (savedState) {
+      const { resources, deck, currentCardIndex, year } = JSON.parse(savedState);
+      setResources(resources);
+      setDeck(deck);
+      setCurrentCardIndex(currentCardIndex);
+      setYear(year);
+      setGameState("playing");
+      setLastEffects({});
+      setGameOverMessage("");
+    } else {
+      startNewGame();
+    }
+  }, [isClient]);
+
+  const startNewGame = useCallback(() => {
     setResources({
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
       army: INITIAL_RESOURCE_VALUE,
       money: INITIAL_RESOURCE_VALUE,
     });
-    setDeck(shuffleArray(gameCards));
+    // Shuffle main cards and prepend shuffled special event cards
+    const shuffledSpecialEvents = shuffleArray(specialEventCards);
+    const shuffledMainDeck = shuffleArray(gameCards);
+    setDeck([...shuffledSpecialEvents, ...shuffledMainDeck]);
     setCurrentCardIndex(0);
-    setGameOver(false);
+    setGameState("playing");
     setGameOverMessage("");
     setLastEffects({});
     setYear(1);
   }, []);
 
   const handleChoice = (choice: Choice) => {
-    if (gameOver) return;
+    if (gameState !== 'playing') return;
 
     setLastEffects(choice.effects);
 
@@ -87,44 +133,60 @@ export default function GameContainer() {
     }
 
     if (gameOverTrigger) {
-      setGameOver(true);
+      setGameState("gameover");
       setGameOverMessage(message);
+      if(isClient) localStorage.removeItem(SAVE_GAME_KEY);
     } else {
-        if (currentCardIndex === deck.length - 1) {
-            setDeck(shuffleArray(gameCards));
-            setCurrentCardIndex(0);
-        } else {
-            setCurrentCardIndex(prev => prev + 1);
-        }
+      if (currentCardIndex === deck.length - 1) {
+          // If we finish the deck (including special events), reshuffle the main cards
+          setDeck(shuffleArray(gameCards));
+          setCurrentCardIndex(0);
+      } else {
+          setCurrentCardIndex(prev => prev + 1);
+      }
     }
   };
 
+  const returnToTitle = () => {
+    setGameState("title");
+  }
+
   const currentCard = deck[currentCardIndex];
   const cardImage = PlaceHolderImages.find(img => img.id === currentCard?.imageId);
-
-  if (!isClient || !currentCard) {
+  
+  if (!isClient) {
     return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-sm items-center justify-center">
             <div className="w-full h-10" />
             <div className="flex h-[470px] w-full items-center justify-center rounded-lg bg-card/50">
                 <h1 className="font-headline text-2xl text-primary">LOADING...</h1>
             </div>
+            <div className="h-8" />
         </div>
     );
   }
 
+  if (gameState === "title") {
+    return <TitleScreen onStart={startNewGame} onContinue={loadGame} hasSave={hasSave} />;
+  }
+
   return (
     <div className="flex flex-col gap-6 items-center">
-      <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameOver ? "opacity-30" : "opacity-100")}>
+      <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameState === 'gameover' ? "opacity-30" : "opacity-100")}>
         <ResourceDisplay resources={resources} effects={lastEffects} />
-        <NarrativeCard
-          key={currentCard.id}
-          card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
-          onChoice={handleChoice}
-        />
+        {currentCard && (
+            <NarrativeCard
+              key={currentCard.id}
+              card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
+              onChoice={handleChoice}
+            />
+        )}
       </div>
-      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameOver ? 0 : 1}}>{year}</p>
-      <GameOverDialog isOpen={gameOver} message={gameOverMessage} onRestart={startGame} />
+      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' ? 0 : 1}}>{year}</p>
+      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
+       <div className="absolute bottom-4 right-4">
+        <Badge variant="outline" className="text-xs font-headline">Year: AD 2024</Badge>
+      </div>
     </div>
   );
 }
