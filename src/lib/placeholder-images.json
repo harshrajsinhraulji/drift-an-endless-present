@@ -1,34 +1,34 @@
 {
   "placeholderImages": [
     {
-      "id": "char-kael",
-      "description": "General Kael, military advisor",
-      "imageUrl": "https://images.unsplash.com/photo-1710617735946-cca4c22455f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmdXR1cmlzdGljJTIwZ2VuZXJhbHxlbnwwfHx8fDE3NjE5NDc0ODl8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "futuristic general"
+      "id": "char-creator",
+      "description": "The Creator, a mysterious entity.",
+      "imageUrl": "https://images.unsplash.com/photo-1729463261338-20deae241620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxob29kZWQlMjBmaWd1cmUlMjBzcGFjZXxlbnwwfHx8fDE3NjE5NDc2NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hooded figure space"
     },
     {
-      "id": "char-valerius",
-      "description": "Finance Minister Valerius",
-      "imageUrl": "https://picsum.photos/seed/102/400/400",
-      "imageHint": "stern official"
+      "id": "char-priest",
+      "description": "The High Priest of the kingdom.",
+      "imageUrl": "https://images.unsplash.com/photo-1562445735-c5ce9f379d7f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlZ3lwdGlhbiUyMHByaWVzdHxlbnwwfHx8fDE3NjE5NDc2NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "egyptian priest"
     },
     {
-      "id": "char-cyra",
-      "description": "Media Mogul Cyra",
-      "imageUrl": "https://picsum.photos/seed/103/400/400",
-      "imageHint": "charismatic woman"
+      "id": "char-general",
+      "description": "The General of the army.",
+      "imageUrl": "https://images.unsplash.com/photo-1616420283293-07018a4692d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZWd5cHRpYW4lMjBnZW5lcmFsfGVufDB8fHx8MTc2MTk0NzY2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "egyptian general"
     },
     {
-      "id": "char-elara",
-      "description": "Chief Scientist Elara",
-      "imageUrl": "https://images.unsplash.com/photo-1580982167011-2a54f6e440ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzY2llbnRpc3QlMjBsYWIlMjBjb2F0fGVufDB8fHx8MTc2MTk0NzQ4OXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "scientist lab coat"
+      "id": "char-treasurer",
+      "description": "The kingdom's Treasurer.",
+      "imageUrl": "https://images.unsplash.com/photo-1720678555946-bbe64841d46f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhbmNpZW50JTIwdHJlYXN1cmVyfGVufDB8fHx8MTc2MTk0NzY2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient treasurer"
     },
     {
-      "id": "char-zoric",
-      "description": "Ambassador Zoric",
-      "imageUrl": "https://picsum.photos/seed/105/400/400",
-      "imageHint": "wise diplomat"
+      "id": "char-stranger",
+      "description": "A mysterious stranger from another time.",
+      "imageUrl": "https://images.unsplash.com/photo-1594153785839-009bbb67b8b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzaGFkb3d5JTIwZmlndXJlfGVufDB8fHx8MTc2MTkyMjA5N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shadowy figure"
     }
   ]
 }

@@ -23,10 +23,10 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 export default function GameContainer() {
   const [resources, setResources] = useState<Resources>({
-    military: INITIAL_RESOURCE_VALUE,
-    treasury: INITIAL_RESOURCE_VALUE,
-    publicApproval: INITIAL_RESOURCE_VALUE,
-    technology: INITIAL_RESOURCE_VALUE,
+    environment: INITIAL_RESOURCE_VALUE,
+    people: INITIAL_RESOURCE_VALUE,
+    army: INITIAL_RESOURCE_VALUE,
+    money: INITIAL_RESOURCE_VALUE,
   });
   const [deck, setDeck] = useState<CardData[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -41,10 +41,10 @@ export default function GameContainer() {
 
   const startGame = useCallback(() => {
     setResources({
-      military: INITIAL_RESOURCE_VALUE,
-      treasury: INITIAL_RESOURCE_VALUE,
-      publicApproval: INITIAL_RESOURCE_VALUE,
-      technology: INITIAL_RESOURCE_VALUE,
+      environment: INITIAL_RESOURCE_VALUE,
+      people: INITIAL_RESOURCE_VALUE,
+      army: INITIAL_RESOURCE_VALUE,
+      money: INITIAL_RESOURCE_VALUE,
     });
     setDeck(shuffleArray(gameCards));
     setCurrentCardIndex(0);
@@ -97,14 +97,14 @@ export default function GameContainer() {
 
   if (!isClient || !currentCard) {
     return (
-        <div className="flex h-[600px] w-full max-w-md items-center justify-center rounded-2xl bg-card/50 backdrop-blur-sm">
-            <h1 className="font-headline text-2xl text-glow">LOADING CYBERNATION...</h1>
+        <div className="flex h-[600px] w-full max-w-sm items-center justify-center rounded-lg bg-card/50">
+            <h1 className="font-headline text-2xl text-primary">LOADING...</h1>
         </div>
     );
   }
 
   return (
-    <div className={cn("w-full max-w-md mx-auto flex flex-col gap-8 z-10 transition-opacity duration-500", gameOver ? "opacity-30" : "opacity-100")}>
+    <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameOver ? "opacity-30" : "opacity-100")}>
       <ResourceDisplay resources={resources} />
       <NarrativeCard
         key={currentCard.id}

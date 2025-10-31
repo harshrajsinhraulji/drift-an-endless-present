@@ -1,8 +1,7 @@
 "use client";
 
 import type { ResourceId } from "@/lib/game-data";
-import { Progress } from "@/components/ui/progress";
-import { Swords, Landmark, Users, BrainCircuit } from "lucide-react";
+import { Leaf, Users, Shield, CircleDollarSign } from "lucide-react";
 
 type Resources = Record<ResourceId, number>;
 
@@ -11,37 +10,31 @@ interface ResourceDisplayProps {
 }
 
 const resourceIcons: Record<ResourceId, React.ElementType> = {
-  military: Swords,
-  treasury: Landmark,
-  publicApproval: Users,
-  technology: BrainCircuit,
+  environment: Leaf,
+  people: Users,
+  army: Shield,
+  money: CircleDollarSign,
 };
 
-const resourceNames: Record<ResourceId, string> = {
-    military: "Military",
-    treasury: "Treasury",
-    publicApproval: "Approval",
-    technology: "Tech",
-}
 
 export default function ResourceDisplay({ resources }: ResourceDisplayProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+    <div className="flex justify-center items-center gap-6 w-full">
       {(Object.keys(resources) as ResourceId[]).map((id) => {
         const Icon = resourceIcons[id];
         const value = resources[id];
-        const name = resourceNames[id];
+        const dotCount = Math.ceil(value / 10);
         return (
           <div key={id} className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2">
-              <Icon className="w-6 h-6 text-primary icon-glow" aria-label={`${name} icon`} />
-              <span className="font-headline text-lg text-glow">{name}</span>
-            </div>
-            <div className="w-full bg-card/50 rounded-full h-2.5 border border-primary/20">
-                <div 
-                    className="bg-primary h-full rounded-full transition-all duration-300 ease-out" 
-                    style={{ width: `${value}%`, boxShadow: `0 0 8px hsl(var(--primary))` }}
-                ></div>
+            <Icon className="w-7 h-7 text-primary" aria-label={`${id} icon`} />
+            <div className="flex flex-col-reverse gap-1">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: i < dotCount ? 'hsl(var(--primary))' : 'hsl(var(--muted))' }}
+                />
+              ))}
             </div>
           </div>
         );

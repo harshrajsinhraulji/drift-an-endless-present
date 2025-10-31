@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -20,16 +19,16 @@ interface GameOverDialogProps {
 export default function GameOverDialog({ isOpen, message, onRestart }: GameOverDialogProps) {
   return (
     <AlertDialog open={isOpen}>
-      <AlertDialogContent className="accent-glow">
+      <AlertDialogContent className="max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle className="font-headline text-2xl text-glow">Reign Over</AlertDialogTitle>
-          <AlertDialogDescription className="text-lg text-foreground/80 pt-4">
+          <AlertDialogTitle className="font-headline text-2xl text-primary text-center">The End</AlertDialogTitle>
+          <AlertDialogDescription className="text-lg text-foreground/80 pt-4 text-center">
             {message}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <Button onClick={onRestart} className="w-full font-headline text-lg">
-            Try Again
+          <Button onClick={onRestart} className="w-full font-headline text-lg" variant="outline">
+            Again
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
