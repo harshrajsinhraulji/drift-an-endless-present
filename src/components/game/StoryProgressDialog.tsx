@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { StoryFlag } from "@/lib/game-data";
+import { storyFlagDescriptions, type StoryFlag } from "@/lib/game-data";
 
 interface StoryProgressDialogProps {
   isOpen: boolean;
@@ -16,12 +16,6 @@ interface StoryProgressDialogProps {
   flags: StoryFlag[];
 }
 
-const flagDescriptions: Record<StoryFlag, string> = {
-    studied_star: "You chose to study the fallen star, unlocking cosmic secrets.",
-    met_astronomer: "You have consulted with the royal astronomers.",
-    creator_github_mercy: "The Creator, Harshrajsinh Raulji, granted you a second chance.",
-    creator_linkedin_prescience: "The Creator, Harshrajsinh Raulji, gave you the gift of foresight.",
-}
 
 export default function StoryProgressDialog({ isOpen, onClose, flags }: StoryProgressDialogProps) {
   return (
@@ -37,7 +31,7 @@ export default function StoryProgressDialog({ isOpen, onClose, flags }: StoryPro
             {flags.length > 0 ? (
                 flags.map(flag => (
                     <div key={flag} className="p-3 rounded-md border border-primary/20 bg-card/50">
-                        <p className="font-body text-base text-foreground">{flagDescriptions[flag] || `An important event occurred: ${flag}`}</p>
+                        <p className="font-body text-base text-foreground">{storyFlagDescriptions[flag] || `An important event occurred: ${flag}`}</p>
                     </div>
                 ))
             ) : (

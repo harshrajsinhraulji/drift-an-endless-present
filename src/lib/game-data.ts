@@ -423,3 +423,10 @@ export const gameOverConditions: Record<string, string> = {
   money_high: "Economic collapse due to extreme inflation has brought your reign to an end.",
   studied_star_ending: "You merged with the cosmic entity. You are no longer human, but a god. Your kingdom is a paradise of crystalline thought, but the laughter of children is never heard again. You have won, but at what cost?",
 };
+
+export const storyFlagDescriptions: Record<StoryFlag, string> = {
+  studied_star: "You chose to study the fallen star, unlocking cosmic secrets.",
+  met_astronomer: "You have consulted with the royal astronomers.",
+  creator_github_mercy: "The Creator, Harshrajsinh Raulji, granted you a second chance.",
+  creator_linkedin_prescience: "The Creator, Harshrajsinh Raulji, gave you the gift of foresight.",
+}
