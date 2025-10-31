@@ -160,6 +160,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
   const leftChoiceOpacity = isDragging ? Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75))) : 1;
   const rightChoiceOpacity = isDragging ? Math.max(0, Math.min(1, dragX / (dragThreshold * 0.75))) : 1;
 
+  const isCreatorCard = card.icon === 'Github' || card.icon === 'Linkedin';
   // @ts-ignore
   const Icon = Lucide[card.icon] || Lucide.HelpCircle;
 
@@ -181,7 +182,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
             <ChevronLeft className="w-16 h-16 text-primary/50 animate-pulse -ml-24" />
             <ChevronRight className="w-16 h-16 text-primary/50 animate-pulse -mr-24" />
           </div>
-          <p className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-primary font-headline text-lg animate-pulse z-20">Drag towards your choice</p>
         </>
       )}
 
@@ -189,7 +189,10 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
         ref={cardRef} 
         style={{...cardStyle, opacity: cardOpacity}}
         className={cn(
-          "w-full h-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
+          "w-full h-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105",
+          isCreatorCard 
+            ? "group-hover:[filter:drop-shadow(0_0_15px_hsl(var(--foreground)/0.8))]"
+            : "group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
           isDragging ? "" : "transition-transform",
         )}
       >
