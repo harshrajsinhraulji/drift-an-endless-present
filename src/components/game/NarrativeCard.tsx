@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { CardData, Choice, ResourceId } from "@/lib/game-data";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Leaf, Users, Shield, CircleDollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -148,7 +148,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
   };
 
-  const choiceOpacity = Math.min(Math.abs(dragX) / dragThreshold, 1);
   const cardOpacity = isAnimatingOut ? 0 : 1;
 
   const leftChoiceOpacity = Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75)));
@@ -167,18 +166,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
         onTouchEnd={handleDragEnd}
     >
       
-      {/* Choice overlays */}
-      <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-24 flex items-center justify-between px-4 pointer-events-none z-30">
-        <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity text-left max-w-[45%]">
-          <p className="font-headline text-primary text-xl text-center drop-shadow-lg">{card.choices[0].text}</p>
-          {showPrescience && <PrescienceDisplay effects={card.choices[0].effects} />}
-        </div>
-        <div style={{ opacity: rightChoiceOpacity }} className="transition-opacity text-right max-w-[45%]">
-          <p className="font-headline text-primary text-xl text-center drop-shadow-lg">{card.choices[1].text}</p>
-          {showPrescience && <PrescienceDisplay effects={card.choices[1].effects} />}
-        </div>
-      </div>
-      
       {isFirstTurn && (
         <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
           <ChevronLeft className="w-10 h-10 text-primary/30 animate-pulse-subtle -ml-2" />
@@ -190,15 +177,15 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
         ref={cardRef} 
         style={{...cardStyle, opacity: cardOpacity}}
         className={cn(
-          "w-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
+          "w-full h-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
           isDragging ? "" : "transition-all",
         )}
       >
-        <Card className="w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm">
+        <Card className="w-full max-w-sm h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col">
           <div className="relative h-24 w-full">
             <div className="absolute inset-0 bg-gradient-to-b from-card via-card/80 to-transparent z-10" />
           </div>
-          <CardContent className="p-6 text-center -mt-20 relative z-20">
+          <CardContent className="p-6 text-center -mt-20 relative z-20 flex-grow">
             <div className="relative h-28 w-28 mx-auto rounded-full overflow-hidden border-2 border-primary/50 mb-4 shadow-md">
               <Image
                 src={card.image}
@@ -211,12 +198,20 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
               />
             </div>
             <h2 className="font-headline text-xl font-bold text-primary mb-2">{card.character}</h2>
-            <p className="text-lg font-body text-foreground/90 mb-6 min-h-[120px]">{card.text}</p>
+            <p className="text-lg font-body text-foreground/90 mb-4 min-h-[100px]">{card.text}</p>
           </CardContent>
+           <CardFooter className="p-4 flex justify-between items-end min-h-[90px]">
+            <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity text-center w-2/5">
+              <p className="font-headline text-primary text-base drop-shadow-lg">{card.choices[0].text}</p>
+              {showPrescience && <PrescienceDisplay effects={card.choices[0].effects} />}
+            </div>
+            <div style={{ opacity: rightChoiceOpacity }} className="transition-opacity text-center w-2/5">
+              <p className="font-headline text-primary text-base drop-shadow-lg">{card.choices[1].text}</p>
+              {showPrescience && <PrescienceDisplay effects={card.choices[1].effects} />}
+            </div>
+          </CardFooter>
         </Card>
       </div>
     </div>
   );
 }
-
-    
