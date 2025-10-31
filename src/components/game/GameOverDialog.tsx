@@ -67,3 +67,5 @@ export default function GameOverDialog({ isOpen, message, onRestart }: GameOverD
     </AlertDialog>
   );
 }
+
+    

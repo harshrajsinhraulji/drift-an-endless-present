@@ -306,8 +306,8 @@ export default function GameContainer() {
 
   if (gameState === "creator_intervention" && creatorCard) {
     return (
-       <div className="flex flex-col gap-6 items-center">
-        <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 z-10">
+       <div className="flex flex-col gap-6 items-center w-full max-w-6xl">
+        <div className="w-full mx-auto flex flex-col gap-6 z-10">
           <ResourceDisplay resources={resources} effects={{}} />
           <NarrativeCard
             key={creatorCard.id}
@@ -322,8 +322,8 @@ export default function GameContainer() {
   }
 
   return (
-    <div className="flex flex-col gap-6 items-center">
-      <div className={cn("w-full max-w-6xl mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameState === 'gameover' ? "opacity-30" : "opacity-100")}>
+    <div className="flex flex-col gap-6 items-center w-full max-w-6xl">
+      <div className={cn("w-full mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameState === 'gameover' ? "opacity-30" : "opacity-100")}>
         <ResourceDisplay resources={resources} effects={lastEffects} />
         {currentCard && (
             <NarrativeCard
@@ -352,3 +352,5 @@ export default function GameContainer() {
     </div>
   );
 }
+
+    
