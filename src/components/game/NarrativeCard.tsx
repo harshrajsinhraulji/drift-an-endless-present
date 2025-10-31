@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useContext } from "react";
-import Image from "next/image";
+import * as Lucide from "lucide-react";
 import type { CardData, Choice, ResourceId } from "@/lib/game-data";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,7 @@ import { Leaf, Users, Shield, CircleDollarSign, ChevronLeft, ChevronRight } from
 import { SoundContext } from "@/contexts/SoundContext";
 
 interface NarrativeCardProps {
-  card: CardData & { image: string, imageHint: string };
+  card: CardData & { imageHint: string };
   onChoice: (choice: Choice) => void;
   showPrescience: boolean;
   isFirstTurn?: boolean;
@@ -160,6 +160,8 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
   const leftChoiceOpacity = isDragging ? Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75))) : 1;
   const rightChoiceOpacity = isDragging ? Math.max(0, Math.min(1, dragX / (dragThreshold * 0.75))) : 1;
 
+  // @ts-ignore
+  const Icon = Lucide[card.icon] || Lucide.HelpCircle;
 
   return (
     <div 
@@ -174,10 +176,13 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     >
       
       {isFirstTurn && (
-        <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0">
-          <ChevronLeft className="w-12 h-12 text-primary/50 animate-pulse -ml-16" />
-          <ChevronRight className="w-12 h-12 text-primary/50 animate-pulse -mr-16" />
-        </div>
+        <>
+          <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-20">
+            <ChevronLeft className="w-16 h-16 text-primary/50 animate-pulse -ml-24" />
+            <ChevronRight className="w-16 h-16 text-primary/50 animate-pulse -mr-24" />
+          </div>
+          <p className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-primary font-headline text-lg animate-pulse z-20">Drag towards your choice</p>
+        </>
       )}
 
       <div 
@@ -193,16 +198,8 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
             <div className="absolute inset-0 bg-gradient-to-b from-card via-card/80 to-transparent z-10" />
           </div>
           <CardContent className="p-6 text-center -mt-20 relative z-20 flex-grow">
-            <div className="relative h-28 w-28 mx-auto rounded-full overflow-hidden border-2 border-primary/50 mb-4 shadow-md">
-              <Image
-                src={card.image}
-                alt={card.character}
-                fill
-                sizes="112px"
-                className="object-cover"
-                data-ai-hint={card.imageHint}
-                priority
-              />
+            <div className="relative h-28 w-28 mx-auto rounded-full border-2 border-primary/50 mb-4 shadow-md flex items-center justify-center bg-card/50">
+              <Icon className="w-16 h-16 text-primary/80" />
             </div>
             <h2 className="font-headline text-xl font-bold text-primary mb-2">{card.character}</h2>
             <p className="text-lg font-body text-foreground/90 mb-4 min-h-[100px]">{card.text}</p>

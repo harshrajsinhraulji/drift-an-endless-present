@@ -4,7 +4,6 @@
 import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import type { ResourceId, CardData, Choice, StoryFlag } from "@/lib/game-data";
 import { gameCards, specialEventCards, INITIAL_RESOURCE_VALUE, gameOverConditions, getCardText } from "@/lib/game-data";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ResourceDisplay from "./ResourceDisplay";
 import NarrativeCard from "./NarrativeCard";
 import GameOverDialog from "./GameOverDialog";
@@ -74,9 +73,9 @@ export default function GameContainer() {
   
   useEffect(() => {
     if (audioRef.current) {
-      if (gameState === 'playing' && bgmVolume > 0) {
+      if ((gameState === 'playing' || gameState === 'title') && bgmVolume > 0) {
         audioRef.current.volume = bgmVolume;
-        audioRef.current.play().catch(e => console.error("Error playing background music:", e));
+        audioRef.current.play().catch(e => {});
       } else {
         audioRef.current.pause();
       }
@@ -324,9 +323,7 @@ export default function GameContainer() {
 
   const currentCard = deck[currentCardIndex];
   const cardText = currentCard ? getCardText(currentCard, resources) : "";
-  const cardImage = PlaceHolderImages.find(img => img.id === currentCard?.imageId);
   const creatorCard = gameCards.find(c => c.id === 302);
-  const creatorCardImage = PlaceHolderImages.find(img => img.id === creatorCard?.imageId);
   
   if (!isClient) {
     return (
@@ -351,7 +348,7 @@ export default function GameContainer() {
           <ResourceDisplay resources={resources} effects={{}} />
           <NarrativeCard
             key={creatorCard.id}
-            card={{ ...creatorCard, text: getCardText(creatorCard, resources), image: creatorCardImage?.imageUrl ?? '', imageHint: creatorCardImage?.imageHint ?? ''}}
+            card={{ ...creatorCard, text: getCardText(creatorCard, resources), imageHint: ''}}
             onChoice={handleCreatorIntervention}
             showPrescience={false}
           />
@@ -368,7 +365,7 @@ export default function GameContainer() {
         {currentCard && (
             <NarrativeCard
               key={currentCard.id}
-              card={{ ...currentCard, text: cardText, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
+              card={{ ...currentCard, text: cardText, imageHint: ''}}
               onChoice={handleChoice}
               showPrescience={showPrescienceThisTurn}
               isFirstTurn={year === 1 && currentCard.id === 0}
@@ -392,6 +389,3 @@ export default function GameContainer() {
     </div>
   );
 }
-
-    
-    

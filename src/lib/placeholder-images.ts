@@ -1,3 +1,4 @@
+
 import data from './placeholder-images.json' assert { type: "json" };
 
 export type ImagePlaceholder = {

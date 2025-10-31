@@ -26,7 +26,7 @@ interface TextVariant {
 export interface CardData {
   id: number;
   character: string;
-  imageId: string;
+  icon: string;
   text: string | TextVariant[];
   choices: [Choice, Choice];
   isSpecial?: boolean; // To identify special event cards
@@ -68,7 +68,7 @@ export const gameCards: CardData[] = [
   {
     id: 0,
     character: "Tutorial",
-    imageId: "char-scribe",
+    icon: "Scroll",
     text: "You are the ruler. Your choices shape the kingdom. Swipe left or right to decide its fate.",
     choices: [
         {
@@ -84,7 +84,7 @@ export const gameCards: CardData[] = [
   {
     id: 1,
     character: "The Advisor",
-    imageId: "char-priest",
+    icon: "Landmark",
     text: "Pharaoh, the great river overflows. Should we invest in strengthening the dams or conserve our resources and let it flood?",
     choices: [
       {
@@ -100,7 +100,7 @@ export const gameCards: CardData[] = [
   {
     id: 2,
     character: "High Priest",
-    imageId: "char-priest",
+    icon: "Pyramid",
     text: "A strange celestial body hangs in the sky. The people are frightened. Should we hold a grand ceremony to appease the gods, or consult the astronomers?",
     choices: [
       {
@@ -118,7 +118,7 @@ export const gameCards: CardData[] = [
   {
     id: 3,
     character: "General",
-    imageId: "char-general",
+    icon: "Swords",
     text: "The northern tribes are restless. A show of force will keep them in line, but it may provoke a larger conflict.",
     choices: [
       {
@@ -134,7 +134,7 @@ export const gameCards: CardData[] = [
   {
     id: 4,
     character: "Treasurer",
-    imageId: "char-treasurer",
+    icon: "Coins",
     text: "The royal granaries are overflowing. We can sell the surplus for a great profit, or distribute it to the people to ensure their loyalty.",
     choices: [
       {
@@ -150,7 +150,7 @@ export const gameCards: CardData[] = [
     {
     id: 6,
     character: "Chief Architect",
-    imageId: "char-architect",
+    icon: "DraftingCompass",
     text: "Great Pharaoh, we can build a grand monument to your glory. It will be a marvel, but will require immense resources.",
     choices: [
       {
@@ -166,7 +166,7 @@ export const gameCards: CardData[] = [
   {
     id: 7,
     character: "Foreign Emissary",
-    imageId: "char-emissary",
+    icon: "Handshake",
     text: "My kingdom offers a trade alliance. It will bring wealth, but also make us dependent on foreign goods.",
     choices: [
       {
@@ -182,7 +182,7 @@ export const gameCards: CardData[] = [
   {
     id: 8,
     character: "Head Farmer",
-    imageId: "char-farmer",
+    icon: "Wheat",
     text: "A plague of locusts threatens the crops. We need soldiers to help, but it will leave our borders vulnerable.",
     choices: [
       {
@@ -198,7 +198,7 @@ export const gameCards: CardData[] = [
   {
     id: 9,
     character: "General",
-    imageId: "char-general",
+    icon: "Swords",
     text: [
       {
         text: "Pharaoh, with the coffers overflowing, now is the time to reward our soldiers. A bonus would ensure their loyalty for years to come.",
@@ -226,7 +226,7 @@ export const gameCards: CardData[] = [
   {
     id: 10,
     character: "High Priest",
-    imageId: "char-priest",
+    icon: "Pyramid",
     text: "The people grow restless with our old traditions. A new festival could unite them, or it could be seen as heresy.",
     choices: [
       {
@@ -242,7 +242,7 @@ export const gameCards: CardData[] = [
   {
     id: 11,
     character: "Lead Astronomer",
-    imageId: "char-astronomer",
+    icon: "Sparkles",
     text: "You summoned me, Pharaoh. The celestial body is no star. It is a vessel. It is waiting.",
     choices: [
       {
@@ -260,7 +260,7 @@ export const gameCards: CardData[] = [
     {
     id: 12,
     character: "Cult Leader",
-    imageId: "char-cultist",
+    icon: "Torah",
     text: "The people flock to my teachings, seeking solace. Embrace our movement, and they will be yours. Suppress us, and risk their wrath.",
     choices: [
       {
@@ -276,7 +276,7 @@ export const gameCards: CardData[] = [
   {
     id: 13,
     character: "Chief Alchemist",
-    imageId: "char-alchemist",
+    icon: "Beaker",
     text: "Pharaoh, my guild is on the verge of a breakthrough: turning lead into gold! We require a significant investment to complete our Great Work.",
     choices: [
       {
@@ -292,7 +292,7 @@ export const gameCards: CardData[] = [
   {
     id: 14,
     character: "General",
-    imageId: "char-general",
+    icon: "Swords",
     text: "Bandits are raiding caravans on the spice road. We can send a detachment, but it will thin our defenses.",
     choices: [
       {
@@ -308,7 +308,7 @@ export const gameCards: CardData[] = [
   {
     id: 15,
     character: "Scribe",
-    imageId: "char-scribe",
+    icon: "Scroll",
     text: "I have found an ancient map in the library. It supposedly leads to a hidden oasis, a source of great vitality for the land.",
     choices: [
       {
@@ -324,7 +324,7 @@ export const gameCards: CardData[] = [
   {
     id: 16,
     character: "Philosopher",
-    imageId: "char-philosopher",
+    icon: "BrainCircuit",
     text: "I have been teaching the youth to question everything, even your divine right to rule. This new way of thinking could lead to innovation or chaos.",
     choices: [
       {
@@ -340,7 +340,7 @@ export const gameCards: CardData[] = [
   {
     id: 17,
     character: "Merchant Captain",
-    imageId: "char-merchant",
+    icon: "Ship",
     text: "A ship from a distant, plagued land requests to dock. Their cargo is valuable, but they carry risk.",
     choices: [
       {
@@ -358,7 +358,7 @@ export const gameCards: CardData[] = [
   {
     id: 18,
     character: "Plague Doctor",
-    imageId: "char-plaguedoctor",
+    icon: "Pipette",
     text: "The sickness spreads. I can devise a cure, but it requires a rare, toxic flower that will poison the rivers.",
     choices: [
       {
@@ -377,7 +377,7 @@ export const gameCards: CardData[] = [
   {
     id: 19,
     character: "Quarantine Guard",
-    imageId: "char-guard",
+    icon: "ShieldAlert",
     text: "To stop the plague, we must lock the sick in their homes. It is brutal, but it will work.",
     choices: [
       {
@@ -396,7 +396,7 @@ export const gameCards: CardData[] = [
   {
     id: 20,
     character: "Royal Spy",
-    imageId: "char-spy",
+    icon: "EyeOff",
     text: "I have uncovered a plot against you within the court. We can expose the traitors publicly or... arrange for them to disappear.",
     choices: [
       {
@@ -412,7 +412,7 @@ export const gameCards: CardData[] = [
   {
     id: 201,
     character: "Lead Astronomer",
-    imageId: "char-astronomer",
+    icon: "Sparkles",
     text: "Pharaoh, the star... it speaks. It offers knowledge beyond our comprehension, a power to reshape the world. But it demands a sacrifice to merge with it.",
     choices: [
       {
@@ -429,7 +429,7 @@ export const gameCards: CardData[] = [
   {
     id: 302,
     character: "Harshrajsinh Raulji",
-    imageId: "char-creator",
+    icon: "Github",
     text: "Your reign is... faltering. I am the Creator of this world. Follow my work on GitHub, and I shall grant you a second chance.",
     choices: [
       {
@@ -448,7 +448,7 @@ export const gameCards: CardData[] = [
   {
     id: 303,
     character: "Harshrajsinh Raulji",
-    imageId: "char-creator",
+    icon: "Linkedin",
     text: "We meet again. Your progress is impressive. As a reward, connect with me on LinkedIn and I will grant you foresight for a decade.",
     choices: [
       {
@@ -471,7 +471,7 @@ export const specialEventCards: CardData[] = [
     {
     id: 101,
     character: "Mysterious Stranger",
-    imageId: "char-stranger",
+    icon: "PersonStanding",
     text: "I offer you a glimpse of the future, a device that can predict the harvest. It will make your kingdom prosperous, but its power is not without cost.",
     choices: [
       {
@@ -488,7 +488,7 @@ export const specialEventCards: CardData[] = [
   {
     id: 103,
     character: "Fallen Star",
-    imageId: "char-creator",
+    icon: "Star",
     text: "A star has fallen from the sky, landing in the desert. It radiates a strange energy. Should we study it or destroy it?",
     choices: [
       {
@@ -506,7 +506,7 @@ export const specialEventCards: CardData[] = [
   {
     id: 104,
     character: "Oracle",
-    imageId: "char-oracle",
+    icon: "BookHeart",
     text: "A terrible sickness festers in a distant land. It travels on the winds and the water. Heed my warning, Pharaoh.",
     choices: [
       {
