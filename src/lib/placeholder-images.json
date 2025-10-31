@@ -29,6 +29,24 @@
       "description": "A mysterious stranger from another time.",
       "imageUrl": "https://images.unsplash.com/photo-1594153785839-009bbb67b8b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzaGFkb3d5JTIwZmlndXJlfGVufDB8fHx8MTc2MTkyMjA5N3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "shadowy figure"
+    },
+    {
+      "id": "char-architect",
+      "description": "The Chief Architect.",
+      "imageUrl": "https://images.unsplash.com/photo-1674025161940-2ecc78b961da?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmNpZW50JTIwYXJjaGl0ZWN0fGVufDB8fHx8MTc2MTk0NzgwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient architect"
+    },
+    {
+      "id": "char-emissary",
+      "description": "A Foreign Emissary.",
+      "imageUrl": "https://images.unsplash.com/photo-1719977325165-edafb0bfd273?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cm95YWwlMjBlbWlzc2FyeXxlbnwwfHx8fDE3NjE5NDc4MDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "royal emissary"
+    },
+    {
+      "id": "char-farmer",
+      "description": "The Head Farmer.",
+      "imageUrl": "https://images.unsplash.com/photo-1688583021112-dfcbf163d4d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmNpZW50JTIwZmFybWVyfGVufDB8fHx8MTc2MTk0NzgxMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient farmer"
     }
   ]
 }

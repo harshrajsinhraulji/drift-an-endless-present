@@ -44,7 +44,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Consult the astronomers.",
-        effects: { people: -5, army: 5 },
+        effects: { people: -5, army: 5, environment: 5 },
       },
     ],
   },
@@ -93,6 +93,86 @@ export const gameCards: CardData[] = [
       {
         text: "Refuse his offer.",
         effects: { army: 5 },
+      },
+    ],
+  },
+  {
+    id: 6,
+    character: "Chief Architect",
+    imageId: "char-architect",
+    text: "Great Pharaoh, we can build a grand monument to your glory. It will be a marvel, but will require immense resources.",
+    choices: [
+      {
+        text: "Build the monument!",
+        effects: { people: 20, money: -25, army: -5 },
+      },
+      {
+        text: "Our resources are needed elsewhere.",
+        effects: { people: -5, army: 5 },
+      },
+    ],
+  },
+  {
+    id: 7,
+    character: "Foreign Emissary",
+    imageId: "char-emissary",
+    text: "My kingdom offers a trade alliance. It will bring wealth, but also make us dependent on foreign goods.",
+    choices: [
+      {
+        text: "Accept the alliance.",
+        effects: { money: 20, army: -10 },
+      },
+      {
+        text: "We will remain self-sufficient.",
+        effects: { money: -5, army: 5 },
+      },
+    ],
+  },
+  {
+    id: 8,
+    character: "Head Farmer",
+    imageId: "char-farmer",
+    text: "A plague of locusts threatens the crops. We need soldiers to help, but it will leave our borders vulnerable.",
+    choices: [
+      {
+        text: "Divert the soldiers.",
+        effects: { environment: 15, army: -15, people: 10 },
+      },
+      {
+        text: "The army must hold its position.",
+        effects: { environment: -20, people: -15 },
+      },
+    ],
+  },
+  {
+    id: 9,
+    character: "General",
+    imageId: "char-general",
+    text: "My soldiers' morale is low. A pay rise would boost their spirits, but the treasury is already strained.",
+    choices: [
+      {
+        text: "Give them a raise.",
+        effects: { army: 15, money: -15 },
+      },
+      {
+        text: "They must serve for glory.",
+        effects: { army: -15 },
+      },
+    ],
+  },
+  {
+    id: 10,
+    character: "High Priest",
+    imageId: "char-priest",
+    text: "The people grow restless with our old traditions. A new festival could unite them, or it could be seen as heresy.",
+    choices: [
+      {
+        text: "Announce the new festival.",
+        effects: { people: 15, money: -5 },
+      },
+      {
+        text: "Uphold the old ways.",
+        effects: { people: -10, army: 5 },
       },
     ],
   },

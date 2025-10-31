@@ -34,6 +34,7 @@ export default function GameContainer() {
   const [gameOverMessage, setGameOverMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [lastEffects, setLastEffects] = useState<Partial<Record<ResourceId, number>>>({});
+  const [year, setYear] = useState(1);
 
   useEffect(() => {
     setIsClient(true);
@@ -52,6 +53,7 @@ export default function GameContainer() {
     setGameOver(false);
     setGameOverMessage("");
     setLastEffects({});
+    setYear(1);
   }, []);
 
   const handleChoice = (choice: Choice) => {
@@ -68,6 +70,7 @@ export default function GameContainer() {
     }
     
     setResources(newResources);
+    setYear(y => y + 1);
 
     for (const key in newResources) {
       const resourceId = key as ResourceId;
@@ -101,20 +104,26 @@ export default function GameContainer() {
 
   if (!isClient || !currentCard) {
     return (
-        <div className="flex h-[600px] w-full max-w-sm items-center justify-center rounded-lg bg-card/50">
-            <h1 className="font-headline text-2xl text-primary">LOADING...</h1>
+        <div className="flex flex-col gap-6 h-[600px] w-full max-w-sm items-center justify-center">
+            <div className="w-full h-10" />
+            <div className="flex h-[470px] w-full items-center justify-center rounded-lg bg-card/50">
+                <h1 className="font-headline text-2xl text-primary">LOADING...</h1>
+            </div>
         </div>
     );
   }
 
   return (
-    <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameOver ? "opacity-30" : "opacity-100")}>
-      <ResourceDisplay resources={resources} effects={lastEffects} />
-      <NarrativeCard
-        key={currentCard.id}
-        card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
-        onChoice={handleChoice}
-      />
+    <div className="flex flex-col gap-6 items-center">
+      <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameOver ? "opacity-30" : "opacity-100")}>
+        <ResourceDisplay resources={resources} effects={lastEffects} />
+        <NarrativeCard
+          key={currentCard.id}
+          card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
+          onChoice={handleChoice}
+        />
+      </div>
+      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameOver ? 0 : 1}}>{year}</p>
       <GameOverDialog isOpen={gameOver} message={gameOverMessage} onRestart={startGame} />
     </div>
   );
