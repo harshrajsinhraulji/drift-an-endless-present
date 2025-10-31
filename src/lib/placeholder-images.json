@@ -2,79 +2,79 @@
   "placeholderImages": [
     {
       "id": "char-creator",
-      "description": "The Creator, a mysterious entity.",
+      "description": "A hooded entity drifting in the cosmos, who watches your kingdom from beyond time.",
       "imageUrl": "https://images.unsplash.com/photo-1729463261338-20deae241620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxob29kZWQlMjBmaWd1cmUlMjBzcGFjZXxlbnwwfHx8fDE3NjE5NDc2NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "hooded figure space"
     },
     {
       "id": "char-priest",
-      "description": "The High Priest of the kingdom.",
+      "description": "The High Priest, whose counsel is as vital and unpredictable as the great river's flood.",
       "imageUrl": "https://images.unsplash.com/photo-1562445735-c5ce9f379d7f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlZ3lwdGlhbiUyMHByaWVzdHxlbnwwfHx8fDE3NjE5NDc2NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "egyptian priest"
     },
     {
       "id": "char-general",
-      "description": "The General of the army.",
+      "description": "The unyielding General of the army, a man forged in desert sun and endless conflict.",
       "imageUrl": "https://images.unsplash.com/photo-1616420283293-07018a4692d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZWd5cHRpYW4lMjBnZW5lcmFsfGVufDB8fHx8MTc2MTk0NzY2NXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "egyptian general"
     },
     {
       "id": "char-treasurer",
-      "description": "The kingdom's Treasurer.",
+      "description": "The kingdom's Treasurer, whose abacus beads click with the sound of rising and falling fortunes.",
       "imageUrl": "https://images.unsplash.com/photo-1720678555946-bbe64841d46f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhbmNpZW50JTIwdHJlYXN1cmVyfGVufDB8fHx8MTc2MTk0NzY2NXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient treasurer"
     },
     {
       "id": "char-stranger",
-      "description": "A mysterious stranger from another time.",
+      "description": "A mysterious stranger who appears from the shimmering heat haze, offering impossible gifts.",
       "imageUrl": "https://images.unsplash.com/photo-1594153785839-009bbb67b8b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzaGFkb3d5JTIwZmlndXJlfGVufDB8fHx8MTc2MTkyMjA5N3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "shadowy figure"
     },
     {
       "id": "char-architect",
-      "description": "The Chief Architect.",
+      "description": "The Chief Architect, a visionary who dreams of monuments that might outlast memory itself.",
       "imageUrl": "https://images.unsplash.com/photo-1674025161940-2ecc78b961da?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmNpZW50JTIwYXJjaGl0ZWN0fGVufDB8fHx8MTc2MTk0NzgwOXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient architect"
     },
     {
       "id": "char-emissary",
-      "description": "A Foreign Emissary.",
+      "description": "A Foreign Emissary from a distant land, offering promises of wealth that carry hidden costs.",
       "imageUrl": "https://images.unsplash.com/photo-1719977325165-edafb0bfd273?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cm95YWwlMjBlbWlzc2FyeXxlbnwwfHx8fDE3NjE5NDc4MDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "royal emissary"
     },
     {
       "id": "char-farmer",
-      "description": "The Head Farmer.",
+      "description": "The Head Farmer, a man whose fortunes are tied to the soil and the whims of the sky.",
       "imageUrl": "https://images.unsplash.com/photo-1688583021112-dfcbf163d4d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmNpZW50JTIwZmFybWVyfGVufDB8fHx8MTc2MTk0NzgxMHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient farmer"
     },
     {
       "id": "char-astronomer",
-      "description": "The Lead Astronomer.",
+      "description": "The Lead Astronomer, who reads the kingdom's fate in the silent, drifting stars.",
       "imageUrl": "https://images.unsplash.com/photo-1598495944122-1b1e42813586?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhbmNpZW50JTIwYXN0cm9ub21lcnxlbnwwfHx8fDE3NjIxNDEzNTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient astronomer"
     },
     {
       "id": "char-cultist",
-      "description": "A charismatic cult leader.",
+      "description": "A charismatic cult leader whose whispers of a new truth find fertile ground in restless hearts.",
       "imageUrl": "https://images.unsplash.com/photo-1654517817804-61a67051e184?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkYXJrJTIwcHJvcGhldHxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "dark prophet"
     },
     {
       "id": "char-alchemist",
-      "description": "A hopeful alchemist.",
+      "description": "The Chief Alchemist, who seeks to transmute not just lead, but the very fate of the kingdom.",
       "imageUrl": "https://images.unsplash.com/photo-1739323147230-d17c6371178a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmNpZW50JTIwc2NpZW50aXN0fGVufDB8fHx8MTc2MTk1MDA5MHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient scientist"
     },
     {
       "id": "char-scribe",
-      "description": "A studious scribe.",
+      "description": "A studious scribe who believes the answers to the future are buried in the scrolls of the past.",
       "imageUrl": "https://images.unsplash.com/photo-1662404400395-3266bf10bd15?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmNpZW50JTIwc2Nob2xhcnxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient scholar"
     },
     {
       "id": "char-philosopher",
-      "description": "A thoughtful philosopher.",
+      "description": "A thoughtful philosopher who dares to ask if the kingdom is built on foundations of sand.",
       "imageUrl": "https://images.unsplash.com/photo-1629097666037-bacf8a44da14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3aXNlJTIwdGhpbmtlcnxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "wise thinker"
     }
