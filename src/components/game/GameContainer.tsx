@@ -348,7 +348,7 @@ export default function GameContainer() {
           <ResourceDisplay resources={resources} effects={{}} />
           <NarrativeCard
             key={creatorCard.id}
-            card={{ ...creatorCard, text: getCardText(creatorCard, resources), imageHint: ''}}
+            card={{ ...creatorCard, text: getCardText(creatorCard, resources)}}
             onChoice={handleCreatorIntervention}
             showPrescience={false}
           />
@@ -365,7 +365,7 @@ export default function GameContainer() {
         {currentCard && (
             <NarrativeCard
               key={currentCard.id}
-              card={{ ...currentCard, text: cardText, imageHint: ''}}
+              card={{ ...currentCard, text: cardText}}
               onChoice={handleChoice}
               showPrescience={showPrescienceThisTurn}
               isFirstTurn={year === 1 && currentCard.id === 0}

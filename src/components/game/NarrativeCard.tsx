@@ -10,7 +10,7 @@ import { Leaf, Users, Shield, CircleDollarSign, ChevronLeft, ChevronRight } from
 import { SoundContext } from "@/contexts/SoundContext";
 
 interface NarrativeCardProps {
-  card: CardData & { imageHint: string };
+  card: CardData;
   onChoice: (choice: Choice) => void;
   showPrescience: boolean;
   isFirstTurn?: boolean;
