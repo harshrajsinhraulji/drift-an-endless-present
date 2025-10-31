@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Lapse: A Forgotten Future',
+  title: 'Drift: Endless Present',
   description: 'An interactive story of survival.',
 };
 

@@ -1,4 +1,3 @@
-
 export type ResourceId = "environment" | "people" | "army" | "money";
 export type StoryFlag = 
   | "studied_star" 
@@ -13,11 +12,17 @@ export interface Choice {
   action?: () => void;
 }
 
+interface TextVariant {
+  text: string;
+  lowResource?: ResourceId;
+  highResource?: ResourceId;
+}
+
 export interface CardData {
   id: number;
   character: string;
   imageId: string;
-  text: string;
+  text: string | TextVariant[];
   choices: [Choice, Choice];
   isSpecial?: boolean; // To identify special event cards
   requiredFlags?: StoryFlag[]; // Card only appears if these flags are set
@@ -25,6 +30,34 @@ export interface CardData {
 }
 
 export const INITIAL_RESOURCE_VALUE = 50;
+const LOW_RESOURCE_THRESHOLD = 30;
+const HIGH_RESOURCE_THRESHOLD = 70;
+
+export const getCardText = (card: CardData, resources: Record<ResourceId, number>): string => {
+  if (typeof card.text === 'string') {
+    return card.text;
+  }
+
+  // Check for a specific high-resource text
+  const highResourceVariant = card.text.find(variant => 
+    variant.highResource && resources[variant.highResource] > HIGH_RESOURCE_THRESHOLD
+  );
+  if (highResourceVariant) {
+    return highResourceVariant.text;
+  }
+
+  // Check for a specific low-resource text
+  const lowResourceVariant = card.text.find(variant => 
+    variant.lowResource && resources[variant.lowResource] < LOW_RESOURCE_THRESHOLD
+  );
+  if (lowResourceVariant) {
+    return lowResourceVariant.text;
+  }
+
+  // Fallback to the default text (the one without resource conditions)
+  const defaultText = card.text.find(variant => !variant.lowResource && !variant.highResource);
+  return defaultText ? defaultText.text : "You are the ruler of a forgotten kingdom. Your choices will determine its fate.";
+};
 
 export const gameCards: CardData[] = [
   {
@@ -145,7 +178,19 @@ export const gameCards: CardData[] = [
     id: 9,
     character: "General",
     imageId: "char-general",
-    text: "My soldiers' morale is low. A pay rise would boost their spirits, but the treasury is already strained.",
+    text: [
+      {
+        text: "Pharaoh, with the coffers overflowing, now is the time to reward our soldiers. A bonus would ensure their loyalty for years to come.",
+        highResource: "money"
+      },
+      {
+        text: "My soldiers' morale is low. A pay rise would boost their spirits, but the treasury is already strained.",
+      },
+       {
+        text: "Pharaoh, my soldiers starve. They cannot fight on glory alone. We must find the funds to pay them, or they will desert.",
+        lowResource: "money"
+      },
+    ],
     choices: [
       {
         text: "Give them a raise.",
