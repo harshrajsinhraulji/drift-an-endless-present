@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -11,6 +12,7 @@ import TitleScreen from "./TitleScreen";
 import StoryProgressDialog from "./StoryProgressDialog";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { Eye } from "lucide-react";
 
 
 type Resources = Record<ResourceId, number>;
@@ -52,7 +54,8 @@ export default function GameContainer() {
   const [hasSave, setHasSave] = useState(false);
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
-  const [prescienceTurns, setPrescienceTurns] = useState(0);
+  const [prescienceCharges, setPrescienceCharges] = useState(0);
+  const [showPrescienceThisTurn, setShowPrescienceThisTurn] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -78,23 +81,25 @@ export default function GameContainer() {
     setLastEffects({});
     setYear(1);
     setStoryFlags(new Set());
-    setPrescienceTurns(0);
+    setPrescienceCharges(0);
+    setShowPrescienceThisTurn(false);
   }, []);
 
   const loadGame = useCallback(() => {
     if (!isClient) return;
     const savedState = localStorage.getItem(SAVE_GAME_KEY);
     if (savedState) {
-      const { resources, deck, currentCardIndex, year, storyFlags, prescienceTurns } = JSON.parse(savedState);
+      const { resources, deck, currentCardIndex, year, storyFlags, prescienceCharges } = JSON.parse(savedState);
       setResources(resources);
       setDeck(deck);
       setCurrentCardIndex(currentCardIndex);
       setYear(year);
       setStoryFlags(storyFlagsFromJSON(storyFlags || []));
-      setPrescienceTurns(prescienceTurns || 0);
+      setPrescienceCharges(prescienceCharges || 0);
       setGameState("playing");
       setLastEffects({});
       setGameOverMessage("");
+      setShowPrescienceThisTurn(false);
     } else {
       startNewGame();
     }
@@ -108,7 +113,7 @@ export default function GameContainer() {
         currentCardIndex,
         year,
         storyFlags: storyFlagsToJSON(storyFlags),
-        prescienceTurns,
+        prescienceCharges,
       };
       localStorage.setItem(SAVE_GAME_KEY, JSON.stringify(saveState));
       setHasSave(true);
@@ -117,7 +122,7 @@ export default function GameContainer() {
       localStorage.removeItem(SAVE_GAME_KEY);
       setHasSave(false);
     }
-  }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient, prescienceTurns]);
+  }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient, prescienceCharges]);
 
 
   const getNextCard = () => {
@@ -199,13 +204,14 @@ export default function GameContainer() {
       newStoryFlags.add(choice.setFlag);
       setStoryFlags(newStoryFlags);
       if (choice.setFlag === 'creator_linkedin_prescience') {
-        setPrescienceTurns(10);
+        setPrescienceCharges(10);
       }
     }
-
-    if (prescienceTurns > 0) {
-      setPrescienceTurns(p => p - 1);
+    
+    if (showPrescienceThisTurn) {
+        setPrescienceCharges(p => p - 1);
     }
+    setShowPrescienceThisTurn(false);
 
     let newResources = { ...resources };
     let gameOverTrigger = false;
@@ -258,6 +264,12 @@ export default function GameContainer() {
     setGameState("title");
   }
 
+  const togglePrescience = () => {
+    if (prescienceCharges > 0) {
+      setShowPrescienceThisTurn(!showPrescienceThisTurn);
+    }
+  };
+
   const currentCard = deck[currentCardIndex];
   const cardImage = PlaceHolderImages.find(img => img.id === currentCard?.imageId);
   const creatorCard = gameCards.find(c => c.id === 302);
@@ -305,14 +317,20 @@ export default function GameContainer() {
               key={currentCard.id}
               card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
               onChoice={handleChoice}
-              showPrescience={prescienceTurns > 0}
+              showPrescience={showPrescienceThisTurn}
             />
         )}
       </div>
       <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' ? 0 : 1}}>{year}</p>
       <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
-       <div className="absolute bottom-4 right-4">
-          <Button onClick={() => setIsStoryDialogOpen(true)} variant="outline" className="text-xs font-headline">
+       <div className="absolute bottom-4 right-4 flex items-center gap-2">
+            {storyFlags.has('creator_linkedin_prescience') && (
+              <Button onClick={togglePrescience} variant={showPrescienceThisTurn ? 'default' : 'outline'} size="sm" className="text-xs font-headline" disabled={prescienceCharges <= 0}>
+                <Eye className="w-4 h-4 mr-1" />
+                {prescienceCharges}
+              </Button>
+            )}
+          <Button onClick={() => setIsStoryDialogOpen(true)} variant="outline" size="sm" className="text-xs font-headline">
             Year: {year}
           </Button>
       </div>
