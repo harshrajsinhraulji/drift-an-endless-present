@@ -204,11 +204,11 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
           </CardContent>
            <CardFooter className="p-4 flex justify-between items-end min-h-[90px] gap-4">
             <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity text-center w-1/2 px-2">
-              <p className="font-headline text-primary text-base drop-shadow-lg break-words">{card.choices[0].text}</p>
+              <p className="font-headline text-primary text-base break-words">{card.choices[0].text}</p>
               {showPrescience && <PrescienceDisplay effects={card.choices[0].effects} />}
             </div>
             <div style={{ opacity: rightChoiceOpacity }} className="transition-opacity text-center w-1/2 px-2">
-              <p className="font-headline text-primary text-base drop-shadow-lg break-words">{card.choices[1].text}</p>
+              <p className="font-headline text-primary text-base break-words">{card.choices[1].text}</p>
               {showPrescience && <PrescienceDisplay effects={card.choices[1].effects} />}
             </div>
           </CardFooter>
