@@ -8,8 +8,10 @@ import ResourceDisplay from "./ResourceDisplay";
 import NarrativeCard from "./NarrativeCard";
 import GameOverDialog from "./GameOverDialog";
 import TitleScreen from "./TitleScreen";
+import StoryProgressDialog from "./StoryProgressDialog";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "../ui/button";
 
 
 type Resources = Record<ResourceId, number>;
@@ -50,6 +52,7 @@ export default function GameContainer() {
   const [year, setYear] = useState(1);
   const [hasSave, setHasSave] = useState(false);
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
+  const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -146,7 +149,7 @@ export default function GameContainer() {
     setLastEffects(choice.effects);
 
     if (choice.setFlag) {
-      setStoryFlags(prev => new Set(prev).add(choice.setFlag));
+      setStoryFlags(prev => new Set(prev).add(choice.setFlag as StoryFlag));
     }
 
     let newResources = { ...resources };
@@ -231,8 +234,11 @@ export default function GameContainer() {
       <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' ? 0 : 1}}>{year}</p>
       <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
        <div className="absolute bottom-4 right-4">
-        <Badge variant="outline" className="text-xs font-headline">Year: AD 2024</Badge>
+          <Button onClick={() => setIsStoryDialogOpen(true)} variant="outline" className="text-xs font-headline">
+            Year: {year}
+          </Button>
       </div>
+      <StoryProgressDialog isOpen={isStoryDialogOpen} onClose={() => setIsStoryDialogOpen(false)} flags={Array.from(storyFlags)} />
     </div>
   );
 }
