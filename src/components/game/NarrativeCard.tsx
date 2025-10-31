@@ -17,21 +17,18 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   const [startX, setStartX] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [choiceText, setChoiceText] = useState("");
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+
 
   const dragThreshold = 80;
 
   const handleChoiceMade = useCallback((choice: Choice) => {
+    setIsAnimatingOut(true);
     onChoice(choice);
-    // After a short delay to allow the card to animate out, reset the state.
-    setTimeout(() => {
-        setDragX(0);
-        if (cardRef.current) {
-          cardRef.current.style.transition = 'none'; // Prevent transition on reset
-        }
-    }, 300);
   }, [onChoice]);
 
   const handleDragStart = (clientX: number) => {
+    if (isAnimatingOut) return;
     if (cardRef.current) {
       setIsDragging(true);
       setStartX(clientX);
@@ -62,6 +59,8 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
     if (Math.abs(dragX) > dragThreshold) {
       const direction = dragX > 0 ? "right" : "left";
       const choiceIndex = direction === "right" ? 1 : 0;
+       // Apply final animation state
+      setDragX(direction === 'left' ? -500 : 500);
       handleChoiceMade(card.choices[choiceIndex]);
     } else {
         // If not dragged far enough, snap back to center
@@ -71,24 +70,24 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   };
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (isDragging) return; // Don't allow key press during a drag
+    if (isDragging || isAnimatingOut) return; // Don't allow key press during a drag
 
     let choiceIndex: number | null = null;
     if (event.key === 'ArrowLeft') {
       choiceIndex = 0;
-      setDragX(-(dragThreshold + 20)); // Move past threshold to trigger animation
       setChoiceText(card.choices[0].text);
+      setDragX(-(dragThreshold + 40));
     } else if (event.key === 'ArrowRight') {
       choiceIndex = 1;
-      setDragX(dragThreshold + 20); // Move past threshold to trigger animation
        setChoiceText(card.choices[1].text);
+       setDragX(dragThreshold + 40);
     }
 
     if (choiceIndex !== null && cardRef.current) {
         cardRef.current.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
         handleChoiceMade(card.choices[choiceIndex]);
     }
-  }, [isDragging, handleChoiceMade, card.choices]);
+  }, [isDragging, isAnimatingOut, handleChoiceMade, card.choices]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -99,13 +98,15 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   
   // Reset card component state when card changes
   useEffect(() => {
-    setDragX(0);
-    setChoiceText("");
-    if(cardRef.current) {
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'none'; // No transition on reset
+      setDragX(0);
+      setChoiceText("");
+      setIsAnimatingOut(false);
       cardRef.current.style.transform = `translateX(0px) rotate(0deg) scale(1)`;
       cardRef.current.style.opacity = '1';
     }
-  }, [card]);
+  }, [card.id]);
 
   const rotation = dragX / 20;
   const cardStyle = {
@@ -113,7 +114,7 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   };
 
   const choiceOpacity = Math.min(Math.abs(dragX) / dragThreshold, 1);
-  const cardOpacity = 1 - Math.abs(dragX) / (dragThreshold * 2);
+  const cardOpacity = isAnimatingOut ? 0 : 1 - Math.abs(dragX) / (dragThreshold * 2.5);
 
   return (
     <div 
@@ -127,19 +128,19 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
         onTouchEnd={handleDragEnd}
     >
         {/* Choice overlay text */}
-       <div className="absolute top-4 left-0 right-0 h-16 flex items-center justify-center transition-opacity duration-200" style={{ opacity: choiceOpacity }}>
-          <p className="font-headline text-primary text-xl text-center px-4">{choiceText}</p>
+       <div className="absolute top-4 left-0 right-0 h-16 flex items-center justify-center transition-opacity duration-200 z-30" style={{ opacity: choiceOpacity }}>
+          <p className="font-headline text-primary text-xl text-center px-4 drop-shadow-lg">{choiceText}</p>
       </div>
       
       <div 
         ref={cardRef} 
-        style={cardStyle} 
+        style={{...cardStyle, opacity: cardOpacity}}
         className={cn(
-          "w-full absolute animate-in fade-in-0 zoom-in-95 duration-300 transition-transform group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
+          "w-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
           isDragging ? "" : "transition-all",
         )}
       >
-        <Card className="w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm" style={{opacity: cardOpacity}}>
+        <Card className="w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm">
           <div className="relative h-24 w-full">
             <div className="absolute inset-0 bg-gradient-to-b from-card via-card/80 to-transparent z-10" />
           </div>

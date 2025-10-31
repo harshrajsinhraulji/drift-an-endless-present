@@ -60,17 +60,27 @@ export default function ResourceDisplay({ resources, effects }: ResourceDisplayP
         const value = resources[id];
         const dotCount = Math.ceil(value / 10);
         const effect = currentEffects[id];
+        const isLow = value <= 20;
+        const isHigh = value >= 80;
 
         return (
           <div key={id} className="relative flex flex-col items-center gap-2">
             {effect && <EffectIndicator effect={effect} />}
-            <Icon className="w-7 h-7 text-primary" aria-label={`${id} icon`} />
+            <Icon className={cn(
+                "w-7 h-7 text-primary",
+                isLow && "animate-pulse text-destructive",
+                isHigh && "animate-pulse text-yellow-400"
+            )} aria-label={`${id} icon`} />
             <div className="flex flex-col-reverse gap-1">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: i < dotCount ? 'hsl(var(--primary))' : 'hsl(var(--muted))' }}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    i < dotCount ? "bg-primary" : "bg-muted",
+                     isLow && i < dotCount && "bg-destructive",
+                     isHigh && i < dotCount && "bg-yellow-400"
+                  )}
                 />
               ))}
             </div>
