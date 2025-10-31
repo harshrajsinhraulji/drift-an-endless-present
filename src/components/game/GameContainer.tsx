@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ResourceId, CardData, Choice, StoryFlag } from "@/lib/game-data";
 import { gameCards, specialEventCards, INITIAL_RESOURCE_VALUE, gameOverConditions } from "@/lib/game-data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -56,13 +56,29 @@ export default function GameContainer() {
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const [prescienceCharges, setPrescienceCharges] = useState(0);
   const [showPrescienceThisTurn, setShowPrescienceThisTurn] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
 
   useEffect(() => {
     setIsClient(true);
     if (localStorage.getItem(SAVE_GAME_KEY)) {
       setHasSave(true);
     }
+     if (!audioRef.current) {
+      audioRef.current = new Audio('/assets/sounds/bgm.mp3');
+      audioRef.current.loop = true;
+    }
   }, []);
+  
+  useEffect(() => {
+    if (audioRef.current) {
+      if (gameState === 'playing') {
+        audioRef.current.play().catch(e => console.error("Error playing background music:", e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [gameState]);
 
   const startNewGame = useCallback(() => {
     setResources({
