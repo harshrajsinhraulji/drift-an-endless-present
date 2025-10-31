@@ -46,7 +46,7 @@ export default function GameOverDialog({ isOpen, message, onRestart }: GameOverD
 
   return (
     <AlertDialog open={isOpen}>
-      <AlertDialogContent className="max-w-4xl">
+      <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
             {Icon && (
                 <div className="mx-auto mb-4">

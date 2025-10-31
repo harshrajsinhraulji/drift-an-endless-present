@@ -310,7 +310,7 @@ export default function GameContainer() {
   
   if (!isClient) {
     return (
-        <div className="flex flex-col gap-6 h-[600px] w-full max-w-4xl items-center justify-center">
+        <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
             <div className="flex h-[470px] w-full items-center justify-center rounded-lg bg-card/50">
                 <h1 className="font-headline text-2xl text-primary">LOADING...</h1>
@@ -326,7 +326,7 @@ export default function GameContainer() {
 
   if (gameState === "creator_intervention" && creatorCard) {
     return (
-       <div className="flex flex-col gap-6 items-center w-full max-w-4xl">
+       <div className="flex flex-col gap-6 items-center w-full max-w-2xl">
         <div className="w-full mx-auto flex flex-col gap-6 z-10">
           <ResourceDisplay resources={resources} effects={{}} />
           <NarrativeCard
@@ -342,7 +342,7 @@ export default function GameContainer() {
   }
 
   return (
-    <div className="flex flex-col gap-6 items-center w-full max-w-4xl">
+    <div className="flex flex-col gap-6 items-center w-full max-w-2xl">
       <div className={cn("w-full mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameState === 'gameover' ? "opacity-30" : "opacity-100")}>
         <ResourceDisplay resources={resources} effects={lastEffects} />
         {currentCard && (
@@ -372,5 +372,3 @@ export default function GameContainer() {
     </div>
   );
 }
-
-    
