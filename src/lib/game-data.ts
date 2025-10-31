@@ -1,8 +1,10 @@
 export type ResourceId = "environment" | "people" | "army" | "money";
+export type StoryFlag = "studied_star";
 
 export interface Choice {
   text: string;
   effects: Partial<Record<ResourceId, number>>;
+  setFlag?: StoryFlag;
 }
 
 export interface CardData {
@@ -12,6 +14,7 @@ export interface CardData {
   text: string;
   choices: [Choice, Choice];
   isSpecial?: boolean; // To identify special event cards
+  requiredFlags?: StoryFlag[]; // Card only appears if these flags are set
 }
 
 export const INITIAL_RESOURCE_VALUE = 50;
@@ -161,6 +164,23 @@ export const gameCards: CardData[] = [
       },
     ],
   },
+  {
+    id: 201,
+    character: "Lead Astronomer",
+    imageId: "char-architect",
+    text: "Pharaoh, the star... it speaks. It offers knowledge beyond our comprehension, a power to reshape the world. But it demands a sacrifice to merge with it.",
+    choices: [
+      {
+        text: "Embrace the power.",
+        effects: { environment: 50, people: -50, army: 50, money: 50 },
+      },
+      {
+        text: "This is madness. Destroy it!",
+        effects: { army: -20 },
+      },
+    ],
+    requiredFlags: ["studied_star"],
+  }
 ];
 
 
@@ -208,6 +228,7 @@ export const specialEventCards: CardData[] = [
       {
         text: "Study the star.",
         effects: { environment: 20, people: -10, money: -10, army: 10 },
+        setFlag: "studied_star",
       },
       {
         text: "Destroy it.",
@@ -227,4 +248,5 @@ export const gameOverConditions: Record<string, string> = {
   army_high: "The army has seized control in a military coup. Your rule is over.",
   money_low: "The kingdom is bankrupt. Your authority crumbles as chaos ensues.",
   money_high: "Economic collapse due to extreme inflation has brought your reign to an end.",
+  studied_star_ending: "You merged with the cosmic entity. You are no longer human, but a god. Your kingdom is a paradise of crystalline thought, but the laughter of children is never heard again. You have won, but at what cost?",
 };

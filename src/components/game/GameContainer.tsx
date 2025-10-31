@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { ResourceId, CardData, Choice } from "@/lib/game-data";
+import type { ResourceId, CardData, Choice, StoryFlag } from "@/lib/game-data";
 import { gameCards, specialEventCards, INITIAL_RESOURCE_VALUE, gameOverConditions } from "@/lib/game-data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ResourceDisplay from "./ResourceDisplay";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 
 type Resources = Record<ResourceId, number>;
 type GameState = "title" | "playing" | "gameover";
+type StoryFlags = Set<StoryFlag>;
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -26,6 +27,12 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 const SAVE_GAME_KEY = "lapse-save-game";
+
+// Helper function to convert Set to Array for JSON serialization
+const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
+// Helper function to convert Array back to Set after JSON parsing
+const storyFlagsFromJSON = (flags: StoryFlag[]) => new Set(flags);
+
 
 export default function GameContainer() {
   const [resources, setResources] = useState<Resources>({
@@ -42,6 +49,7 @@ export default function GameContainer() {
   const [lastEffects, setLastEffects] = useState<Partial<Record<ResourceId, number>>>({});
   const [year, setYear] = useState(1);
   const [hasSave, setHasSave] = useState(false);
+  const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
 
   useEffect(() => {
     setIsClient(true);
@@ -57,6 +65,7 @@ export default function GameContainer() {
         deck,
         currentCardIndex,
         year,
+        storyFlags: storyFlagsToJSON(storyFlags),
       };
       localStorage.setItem(SAVE_GAME_KEY, JSON.stringify(saveState));
       setHasSave(true);
@@ -65,17 +74,18 @@ export default function GameContainer() {
       localStorage.removeItem(SAVE_GAME_KEY);
       setHasSave(false);
     }
-  }, [resources, deck, currentCardIndex, year, gameState, isClient]);
+  }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient]);
 
   const loadGame = useCallback(() => {
     if (!isClient) return;
     const savedState = localStorage.getItem(SAVE_GAME_KEY);
     if (savedState) {
-      const { resources, deck, currentCardIndex, year } = JSON.parse(savedState);
+      const { resources, deck, currentCardIndex, year, storyFlags } = JSON.parse(savedState);
       setResources(resources);
       setDeck(deck);
       setCurrentCardIndex(currentCardIndex);
       setYear(year);
+      setStoryFlags(storyFlagsFromJSON(storyFlags || []));
       setGameState("playing");
       setLastEffects({});
       setGameOverMessage("");
@@ -100,12 +110,44 @@ export default function GameContainer() {
     setGameOverMessage("");
     setLastEffects({});
     setYear(1);
+    setStoryFlags(new Set());
   }, []);
+
+  const getNextCardIndex = (currentIndex: number, currentDeck: CardData[], currentFlags: StoryFlags): number => {
+    let nextIndex = currentIndex + 1;
+
+    // Check for story-specific cards
+    const potentialStoryCards = gameCards.filter(
+        card => card.requiredFlags && card.requiredFlags.every(flag => currentFlags.has(flag)) && !currentDeck.some(dCard => dCard.id === card.id)
+    );
+
+    if (potentialStoryCards.length > 0) {
+        // For simplicity, we're just adding the first one found.
+        // A more complex system might have priorities or multiple insertions.
+        const storyCard = potentialStoryCards[0];
+        // Insert the story card into the deck to be the next card
+        const newDeck = [...currentDeck.slice(0, currentIndex + 1), storyCard, ...currentDeck.slice(currentIndex + 1)];
+        setDeck(newDeck);
+        return currentIndex + 1;
+    }
+
+    if (nextIndex >= currentDeck.length) {
+      // Reshuffle main deck and append it. Don't re-add special events.
+      const newShuffledMainDeck = shuffleArray(gameCards.filter(c => !c.requiredFlags));
+      setDeck([...currentDeck, ...newShuffledMainDeck]);
+    }
+    
+    return nextIndex;
+  };
 
   const handleChoice = (choice: Choice) => {
     if (gameState !== 'playing') return;
 
     setLastEffects(choice.effects);
+
+    if (choice.setFlag) {
+      setStoryFlags(prev => new Set(prev).add(choice.setFlag));
+    }
 
     let newResources = { ...resources };
     let gameOverTrigger = false;
@@ -118,32 +160,36 @@ export default function GameContainer() {
     setResources(newResources);
     setYear(y => y + 1);
 
-    for (const key in newResources) {
-      const resourceId = key as ResourceId;
-      if (newResources[resourceId] <= 0) {
+    // Special ending for the star child arc
+    if (choice.setFlag === "studied_star" && newResources.people <= 0) {
         gameOverTrigger = true;
-        message = gameOverConditions[`${resourceId}_low`];
-        break;
-      }
-      if (newResources[resourceId] >= 100) {
+        message = gameOverConditions.studied_star_ending;
+    } else if (currentCard?.id === 201 && choice.text === "Embrace the power.") {
         gameOverTrigger = true;
-        message = gameOverConditions[`${resourceId}_high`];
-        break;
-      }
+        message = gameOverConditions.studied_star_ending;
+    } else {
+        for (const key in newResources) {
+            const resourceId = key as ResourceId;
+            if (newResources[resourceId] <= 0) {
+                gameOverTrigger = true;
+                message = gameOverConditions[`${resourceId}_low`];
+                break;
+            }
+            if (newResources[resourceId] >= 100) {
+                gameOverTrigger = true;
+                message = gameOverConditions[`${resourceId}_high`];
+                break;
+            }
+        }
     }
+
 
     if (gameOverTrigger) {
       setGameState("gameover");
       setGameOverMessage(message);
       if(isClient) localStorage.removeItem(SAVE_GAME_KEY);
     } else {
-      if (currentCardIndex === deck.length - 1) {
-          // If we finish the deck (including special events), reshuffle the main cards
-          setDeck(shuffleArray(gameCards));
-          setCurrentCardIndex(0);
-      } else {
-          setCurrentCardIndex(prev => prev + 1);
-      }
+       setCurrentCardIndex(prev => getNextCardIndex(prev, deck, new Set(storyFlags).add(choice.setFlag as StoryFlag)));
     }
   };
 
