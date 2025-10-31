@@ -148,51 +148,60 @@ export default function GameContainer() {
 
 
   const getNextCard = () => {
-    let potentialDeck = [...deck];
-    let potentialIndex = currentCardIndex + 1;
-  
-    // Function to check if a card is valid to be drawn
-    const isCardValid = (card: CardData) => {
-      const alreadyInDeck = deck.some(dCard => dCard.id === card.id);
-      const requiredFlagsMet = !card.requiredFlags || card.requiredFlags.every(flag => storyFlags.has(flag));
-      const blockedByFlagsMet = !card.blockedByFlags || !card.blockedByFlags.some(flag => storyFlags.has(flag));
-      return !alreadyInDeck && requiredFlagsMet && blockedByFlagsMet && !card.isSpecial;
-    };
-  
-    // Check for story-specific cards that should be injected
-    const storyCardsToInject = gameCards.filter(isCardValid);
-  
-    if (storyCardsToInject.length > 0) {
-      // Inject the first valid story card to be the next one
-      const newDeck = [...deck.slice(0, potentialIndex), ...storyCardsToInject, ...deck.slice(potentialIndex)];
-      setDeck(newDeck);
-      return potentialIndex;
-    }
-  
-    // If no story card, or we are at the end of the deck, reshuffle and continue
-    if (potentialIndex >= potentialDeck.length) {
-      const seenCardIds = new Set(potentialDeck.map(c => c.id));
-      const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c) && !c.requiredFlags);
-      const newShuffledMainDeck = shuffleArray(unseenMainCards.length > 0 ? unseenMainCards : gameCards.filter(c => !c.isSpecial && !c.requiredFlags));
-      
-      const newDeck = [...potentialDeck, ...newShuffledMainDeck];
-      setDeck(newDeck);
-    }
-    
-    // Make sure the next card is valid with the current flags
-    while(potentialDeck[potentialIndex] && (potentialDeck[potentialIndex].blockedByFlags?.some(flag => storyFlags.has(flag)) || potentialDeck[potentialIndex].isSpecial)) {
-        potentialIndex++;
-        if (potentialIndex >= potentialDeck.length) {
-             const seenCardIds = new Set(potentialDeck.map(c => c.id));
-             const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c) && !c.requiredFlags);
-             const newShuffledMainDeck = shuffleArray(unseenMainCards.length > 0 ? unseenMainCards : gameCards.filter(c => !c.isSpecial && !c.requiredFlags));
-      
-            const newDeck = [...potentialDeck, ...newShuffledMainDeck];
-            setDeck(newDeck);
+    let nextIndex = currentCardIndex + 1;
+    let newDeck = [...deck];
+
+    // Function to find the next valid card in the current deck
+    const findNextValidCardIndex = (startIndex: number, currentDeck: CardData[]) => {
+        let i = startIndex;
+        while (i < currentDeck.length) {
+            const card = currentDeck[i];
+            const isBlocked = card.blockedByFlags?.some(flag => storyFlags.has(flag));
+            if (!isBlocked) {
+                return i;
+            }
+            i++;
         }
+        return -1; // No valid card found
+    };
+    
+    // Check for any story cards that must be injected now
+    const isInjectable = (card: CardData) => 
+        !deck.some(dCard => dCard.id === card.id) &&
+        card.requiredFlags?.every(flag => storyFlags.has(flag)) &&
+        !card.blockedByFlags?.some(flag => storyFlags.has(flag));
+        
+    const storyCardsToInject = gameCards.filter(isInjectable);
+
+    if (storyCardsToInject.length > 0) {
+        newDeck.splice(nextIndex, 0, ...storyCardsToInject);
+        setDeck(newDeck);
+        return findNextValidCardIndex(nextIndex, newDeck);
     }
 
-    return potentialIndex;
+    let validNextIndex = findNextValidCardIndex(nextIndex, newDeck);
+    
+    // If no valid card is found, it's time to reshuffle.
+    if (validNextIndex === -1) {
+        // Get all non-special, non-story-arc cards that have been seen
+        const seenStandardCardIds = new Set(deck.slice(0, nextIndex).map(c => c.id));
+        const reshuffleableCards = gameCards.filter(c => 
+            !c.isSpecial && 
+            !c.requiredFlags && 
+            seenStandardCardIds.has(c.id)
+        );
+
+        const newShuffledCards = shuffleArray(reshuffleableCards);
+        
+        // Append the reshuffled cards to the deck
+        const reshuffledDeck = [...newDeck, ...newShuffledCards];
+        setDeck(reshuffledDeck);
+        
+        // Find the next valid card in the newly extended deck
+        validNextIndex = findNextValidCardIndex(nextIndex, reshuffledDeck);
+    }
+
+    return validNextIndex;
   };
 
   const handleCreatorIntervention = (choice: Choice) => {
@@ -292,7 +301,14 @@ export default function GameContainer() {
       }
 
     } else {
-       setCurrentCardIndex(getNextCard());
+       const nextCardIndex = getNextCard();
+       if (nextCardIndex !== -1) {
+         setCurrentCardIndex(nextCardIndex);
+       } else {
+         // This should theoretically not be reached with the new logic, but as a fallback:
+         setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
+         setGameState("gameover");
+       }
     }
   };
 
@@ -377,4 +393,5 @@ export default function GameContainer() {
   );
 }
 
+    
     
