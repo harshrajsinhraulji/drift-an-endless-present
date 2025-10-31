@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "char-kael",
+      "description": "General Kael, military advisor",
+      "imageUrl": "https://images.unsplash.com/photo-1710617735946-cca4c22455f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmdXR1cmlzdGljJTIwZ2VuZXJhbHxlbnwwfHx8fDE3NjE5NDc0ODl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic general"
+    },
+    {
+      "id": "char-valerius",
+      "description": "Finance Minister Valerius",
+      "imageUrl": "https://picsum.photos/seed/102/400/400",
+      "imageHint": "stern official"
+    },
+    {
+      "id": "char-cyra",
+      "description": "Media Mogul Cyra",
+      "imageUrl": "https://picsum.photos/seed/103/400/400",
+      "imageHint": "charismatic woman"
+    },
+    {
+      "id": "char-elara",
+      "description": "Chief Scientist Elara",
+      "imageUrl": "https://images.unsplash.com/photo-1580982167011-2a54f6e440ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzY2llbnRpc3QlMjBsYWIlMjBjb2F0fGVufDB8fHx8MTc2MTk0NzQ4OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "scientist lab coat"
+    },
+    {
+      "id": "char-zoric",
+      "description": "Ambassador Zoric",
+      "imageUrl": "https://picsum.photos/seed/105/400/400",
+      "imageHint": "wise diplomat"
+    }
+  ]
 }
