@@ -270,23 +270,6 @@ export const specialEventCards: CardData[] = [
     isSpecial: true,
   },
   {
-    id: 102,
-    character: "The Creator",
-    imageId: "char-creator",
-    text: "A great flood is coming. I can save your people, but you must cede all authority to me for one cycle. Trust me, or trust your own strength?",
-    choices: [
-        {
-            text: "I trust you.",
-            effects: { people: 40, army: -20, money: -20, environment: -20},
-        },
-        {
-            text: "We will save ourselves.",
-            effects: { people: -30, environment: -30},
-        }
-    ],
-    isSpecial: true,
-  },
-  {
     id: 103,
     character: "Fallen Star",
     imageId: "char-creator",
