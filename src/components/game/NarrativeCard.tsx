@@ -65,7 +65,10 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
 
   const handleChoiceMade = useCallback((choice: Choice) => {
     setIsAnimatingOut(true);
-    onChoice(choice);
+    // The onChoice will be called after the animation finishes in the handleDragEnd or handleKeyDown
+    setTimeout(() => {
+        onChoice(choice);
+    }, 300);
   }, [onChoice]);
 
   const handleDragStart = (clientX: number) => {
@@ -84,7 +87,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
   };
 
   const handleDragEnd = () => {
-    if (!isDragging) return;
+    if (!isDragging || isAnimatingOut) return;
     
     setIsDragging(false);
 
@@ -113,7 +116,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
       setDragX(-(dragThreshold + 40));
     } else if (event.key === 'ArrowRight') {
       choiceIndex = 1;
-       setDragX(dragThreshold + 40);
+      setDragX(dragThreshold + 40);
     }
 
     if (choiceIndex !== null && cardRef.current) {
@@ -151,7 +154,6 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
   const leftChoiceOpacity = Math.max(0, Math.min(1, -dragX / (dragThreshold * 0.75)));
   const rightChoiceOpacity = Math.max(0, Math.min(1, dragX / (dragThreshold * 0.75)));
 
-  const activeChoice = dragX > 0 ? card.choices[1] : card.choices[0];
 
   return (
     <div 
@@ -167,11 +169,11 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
       
       {/* Choice overlays */}
       <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-24 flex items-center justify-between px-4 pointer-events-none z-30">
-        <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity">
+        <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity text-left max-w-[45%]">
           <p className="font-headline text-primary text-xl text-center drop-shadow-lg">{card.choices[0].text}</p>
           {showPrescience && <PrescienceDisplay effects={card.choices[0].effects} />}
         </div>
-        <div style={{ opacity: rightChoiceOpacity }} className="transition-opacity">
+        <div style={{ opacity: rightChoiceOpacity }} className="transition-opacity text-right max-w-[45%]">
           <p className="font-headline text-primary text-xl text-center drop-shadow-lg">{card.choices[1].text}</p>
           {showPrescience && <PrescienceDisplay effects={card.choices[1].effects} />}
         </div>
@@ -216,3 +218,5 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     </div>
   );
 }
+
+    
