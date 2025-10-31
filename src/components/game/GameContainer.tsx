@@ -169,6 +169,8 @@ export default function GameContainer() {
   };
 
   const handleCreatorIntervention = (choice: Choice) => {
+    if (choice.action) choice.action();
+    
     if (choice.setFlag === 'creator_github_mercy') {
       setStoryFlags(prev => new Set(prev).add('creator_github_mercy'));
       setResources({
@@ -188,6 +190,7 @@ export default function GameContainer() {
 
   const handleChoice = (choice: Choice) => {
     if (gameState !== 'playing') return;
+    if (choice.action) choice.action();
 
     setLastEffects(choice.effects);
 
@@ -216,7 +219,7 @@ export default function GameContainer() {
     setYear(y => y + 1);
 
     // Special ending for the star child arc
-    if (currentCard?.id === 201 && choice.text === "Embrace the power.") {
+    if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
     } else {

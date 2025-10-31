@@ -18,8 +18,8 @@ interface StoryProgressDialogProps {
 const flagDescriptions: Record<StoryFlag, string> = {
     studied_star: "You chose to study the fallen star, unlocking cosmic secrets.",
     met_astronomer: "You have consulted with the royal astronomers.",
-    creator_github_mercy: "The Creator granted you a second chance.",
-    creator_linkedin_prescience: "The Creator gave you the gift of foresight for a decade.",
+    creator_github_mercy: "The Creator, Harshrajsinh Raulji, granted you a second chance.",
+    creator_linkedin_prescience: "The Creator, Harshrajsinh Raulji, gave you the gift of foresight.",
 }
 
 export default function StoryProgressDialog({ isOpen, onClose, flags }: StoryProgressDialogProps) {

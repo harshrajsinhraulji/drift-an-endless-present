@@ -1,3 +1,4 @@
+
 export type ResourceId = "environment" | "people" | "army" | "money";
 export type StoryFlag = 
   | "studied_star" 
@@ -9,6 +10,7 @@ export interface Choice {
   text: string;
   effects: Partial<Record<ResourceId, number>>;
   setFlag?: StoryFlag;
+  action?: () => void;
 }
 
 export interface CardData {
@@ -208,17 +210,18 @@ export const gameCards: CardData[] = [
   },
   {
     id: 302,
-    character: "The Creator",
+    character: "Harshrajsinh Raulji",
     imageId: "char-creator",
-    text: "I see your reign is... faltering. Yet, I believe you can do better. Follow my github, and I shall grant you a second chance.",
+    text: "Your reign is... faltering. I am the Creator of this world. Follow my work on GitHub, and I shall grant you a second chance.",
     choices: [
       {
-        text: "I agree.",
+        text: "Open GitHub & accept.",
         effects: {},
-        setFlag: "creator_github_mercy"
+        setFlag: "creator_github_mercy",
+        action: () => window.open('https://github.com/harshrajsinhraulji', '_blank'),
       },
       {
-        text: "I refuse.",
+        text: "I refuse your help.",
         effects: {},
       },
     ],
@@ -226,14 +229,15 @@ export const gameCards: CardData[] = [
   },
   {
     id: 303,
-    character: "The Creator",
+    character: "Harshrajsinh Raulji",
     imageId: "char-creator",
-    text: "We meet again. I am impressed by your progress. As a reward, I offer you a gift: for a decade, you will see the consequences of your choices. All you must do is follow my linkedin.",
+    text: "We meet again. Your progress is impressive. As a reward, connect with me on LinkedIn and I will grant you foresight for a decade.",
     choices: [
       {
-        text: "Grant me this power.",
+        text: "Open LinkedIn & accept.",
         effects: {},
         setFlag: "creator_linkedin_prescience",
+        action: () => window.open('https://www.linkedin.com/in/harshrajsinhraulji', '_blank'),
       },
       {
         text: "I need no such gift.",
