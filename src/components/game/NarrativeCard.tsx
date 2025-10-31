@@ -64,6 +64,8 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
   const dragThreshold = 80;
 
   const handleChoiceMade = useCallback((choice: Choice) => {
+    const audio = new Audio('/assets/sounds/card.mp3');
+    audio.play().catch(e => console.error("Error playing sound:", e));
     setIsAnimatingOut(true);
     // The onChoice will be called after the animation finishes in the handleDragEnd or handleKeyDown
     setTimeout(() => {
