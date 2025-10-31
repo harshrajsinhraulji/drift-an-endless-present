@@ -14,7 +14,7 @@ import { Button } from "../ui/button";
 
 
 type Resources = Record<ResourceId, number>;
-type GameState = "title" | "playing" | "gameover";
+type GameState = "title" | "playing" | "gameover" | "creator_intervention";
 type StoryFlags = Set<StoryFlag>;
 
 // Fisher-Yates shuffle algorithm
@@ -52,6 +52,7 @@ export default function GameContainer() {
   const [hasSave, setHasSave] = useState(false);
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
+  const [prescienceTurns, setPrescienceTurns] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
@@ -69,7 +70,7 @@ export default function GameContainer() {
     });
     // Shuffle main cards and prepend shuffled special event cards
     const shuffledSpecialEvents = shuffleArray(specialEventCards);
-    const shuffledMainDeck = shuffleArray(gameCards.filter(c => !c.requiredFlags));
+    const shuffledMainDeck = shuffleArray(gameCards.filter(c => !c.requiredFlags && !c.isSpecial));
     setDeck([...shuffledSpecialEvents, ...shuffledMainDeck]);
     setCurrentCardIndex(0);
     setGameState("playing");
@@ -77,18 +78,20 @@ export default function GameContainer() {
     setLastEffects({});
     setYear(1);
     setStoryFlags(new Set());
+    setPrescienceTurns(0);
   }, []);
 
   const loadGame = useCallback(() => {
     if (!isClient) return;
     const savedState = localStorage.getItem(SAVE_GAME_KEY);
     if (savedState) {
-      const { resources, deck, currentCardIndex, year, storyFlags } = JSON.parse(savedState);
+      const { resources, deck, currentCardIndex, year, storyFlags, prescienceTurns } = JSON.parse(savedState);
       setResources(resources);
       setDeck(deck);
       setCurrentCardIndex(currentCardIndex);
       setYear(year);
       setStoryFlags(storyFlagsFromJSON(storyFlags || []));
+      setPrescienceTurns(prescienceTurns || 0);
       setGameState("playing");
       setLastEffects({});
       setGameOverMessage("");
@@ -105,6 +108,7 @@ export default function GameContainer() {
         currentCardIndex,
         year,
         storyFlags: storyFlagsToJSON(storyFlags),
+        prescienceTurns,
       };
       localStorage.setItem(SAVE_GAME_KEY, JSON.stringify(saveState));
       setHasSave(true);
@@ -113,7 +117,7 @@ export default function GameContainer() {
       localStorage.removeItem(SAVE_GAME_KEY);
       setHasSave(false);
     }
-  }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient]);
+  }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient, prescienceTurns]);
 
 
   const getNextCard = () => {
@@ -164,6 +168,23 @@ export default function GameContainer() {
     return potentialIndex;
   };
 
+  const handleCreatorIntervention = (choice: Choice) => {
+    if (choice.setFlag === 'creator_github_mercy') {
+      setStoryFlags(prev => new Set(prev).add('creator_github_mercy'));
+      setResources({
+        environment: INITIAL_RESOURCE_VALUE,
+        people: INITIAL_RESOURCE_VALUE,
+        army: INITIAL_RESOURCE_VALUE,
+        money: INITIAL_RESOURCE_VALUE,
+      });
+      setGameState('playing');
+      setLastEffects({});
+      setCurrentCardIndex(getNextCard());
+    } else {
+      setGameState("gameover");
+    }
+  }
+
 
   const handleChoice = (choice: Choice) => {
     if (gameState !== 'playing') return;
@@ -174,6 +195,13 @@ export default function GameContainer() {
     if (choice.setFlag) {
       newStoryFlags.add(choice.setFlag);
       setStoryFlags(newStoryFlags);
+      if (choice.setFlag === 'creator_linkedin_prescience') {
+        setPrescienceTurns(10);
+      }
+    }
+
+    if (prescienceTurns > 0) {
+      setPrescienceTurns(p => p - 1);
     }
 
     let newResources = { ...resources };
@@ -209,9 +237,15 @@ export default function GameContainer() {
 
 
     if (gameOverTrigger) {
-      setGameState("gameover");
       setGameOverMessage(message);
-      if(isClient) localStorage.removeItem(SAVE_GAME_KEY);
+      if (isClient) localStorage.removeItem(SAVE_GAME_KEY);
+
+      if (!storyFlags.has('creator_github_mercy')) {
+        setGameState("creator_intervention");
+      } else {
+        setGameState("gameover");
+      }
+
     } else {
        setCurrentCardIndex(getNextCard());
     }
@@ -223,6 +257,8 @@ export default function GameContainer() {
 
   const currentCard = deck[currentCardIndex];
   const cardImage = PlaceHolderImages.find(img => img.id === currentCard?.imageId);
+  const creatorCard = gameCards.find(c => c.id === 302);
+  const creatorCardImage = PlaceHolderImages.find(img => img.id === creatorCard?.imageId);
   
   if (!isClient) {
     return (
@@ -240,6 +276,23 @@ export default function GameContainer() {
     return <TitleScreen onStart={startNewGame} onContinue={loadGame} hasSave={hasSave} />;
   }
 
+  if (gameState === "creator_intervention" && creatorCard) {
+    return (
+       <div className="flex flex-col gap-6 items-center">
+        <div className="w-full max-w-sm mx-auto flex flex-col gap-6 z-10">
+          <ResourceDisplay resources={resources} effects={{}} />
+          <NarrativeCard
+            key={creatorCard.id}
+            card={{ ...creatorCard, image: creatorCardImage?.imageUrl ?? '', imageHint: creatorCardImage?.imageHint ?? ''}}
+            onChoice={handleCreatorIntervention}
+            showPrescience={false}
+          />
+        </div>
+        <p className="text-primary font-headline text-2xl h-8">{year}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 items-center">
       <div className={cn("w-full max-w-sm mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameState === 'gameover' ? "opacity-30" : "opacity-100")}>
@@ -249,6 +302,7 @@ export default function GameContainer() {
               key={currentCard.id}
               card={{ ...currentCard, image: cardImage?.imageUrl ?? '', imageHint: cardImage?.imageHint ?? ''}}
               onChoice={handleChoice}
+              showPrescience={prescienceTurns > 0}
             />
         )}
       </div>

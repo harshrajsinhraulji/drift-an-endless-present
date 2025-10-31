@@ -1,5 +1,9 @@
 export type ResourceId = "environment" | "people" | "army" | "money";
-export type StoryFlag = "studied_star" | "met_astronomer";
+export type StoryFlag = 
+  | "studied_star" 
+  | "met_astronomer"
+  | "creator_github_mercy"
+  | "creator_linkedin_prescience";
 
 export interface Choice {
   text: string;
@@ -23,12 +27,12 @@ export const INITIAL_RESOURCE_VALUE = 50;
 export const gameCards: CardData[] = [
   {
     id: 1,
-    character: "The Creator",
-    imageId: "char-creator",
-    text: "Pharaoh, I have returned. The fate of this land rests on your choices. The great river overflows, will you build dams or let it flood?",
+    character: "The Advisor",
+    imageId: "char-priest",
+    text: "Pharaoh, the great river overflows. Should we invest in strengthening the dams or conserve our resources and let it flood?",
     choices: [
       {
-        text: "Build the dams.",
+        text: "Strengthen the dams.",
         effects: { money: -15, environment: 10, people: 5 },
       },
       {
@@ -201,7 +205,45 @@ export const gameCards: CardData[] = [
       },
     ],
     requiredFlags: ["studied_star"],
-  }
+  },
+  {
+    id: 302,
+    character: "The Creator",
+    imageId: "char-creator",
+    text: "I see your reign is... faltering. Yet, I believe you can do better. Follow my github, and I shall grant you a second chance.",
+    choices: [
+      {
+        text: "I agree.",
+        effects: {},
+        setFlag: "creator_github_mercy"
+      },
+      {
+        text: "I refuse.",
+        effects: {},
+      },
+    ],
+    isSpecial: true,
+  },
+  {
+    id: 303,
+    character: "The Creator",
+    imageId: "char-creator",
+    text: "We meet again. I am impressed by your progress. As a reward, I offer you a gift: for a decade, you will see the consequences of your choices. All you must do is follow my linkedin.",
+    choices: [
+      {
+        text: "Grant me this power.",
+        effects: {},
+        setFlag: "creator_linkedin_prescience",
+      },
+      {
+        text: "I need no such gift.",
+        effects: { people: -5 },
+      },
+    ],
+    isSpecial: true,
+    requiredFlags: ["creator_github_mercy"],
+    blockedByFlags: ["creator_linkedin_prescience"],
+  },
 ];
 
 

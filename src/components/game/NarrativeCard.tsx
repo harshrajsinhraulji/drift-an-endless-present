@@ -2,16 +2,57 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import type { CardData, Choice } from "@/lib/game-data";
+import type { CardData, Choice, ResourceId } from "@/lib/game-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Leaf, Users, Shield, CircleDollarSign } from "lucide-react";
 
 interface NarrativeCardProps {
   card: CardData & { image: string, imageHint: string };
   onChoice: (choice: Choice) => void;
+  showPrescience: boolean;
 }
 
-export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
+const resourceIcons: Record<ResourceId, React.ElementType> = {
+  environment: Leaf,
+  people: Users,
+  army: Shield,
+  money: CircleDollarSign,
+};
+
+const PrescienceDisplay = ({ effects }: { effects: Partial<Record<ResourceId, number>> }) => {
+  return (
+    <div className="flex justify-center items-center gap-2 mt-1">
+      {(Object.keys(effects) as ResourceId[]).map(id => {
+        const effect = effects[id];
+        if (!effect) return null;
+        const Icon = resourceIcons[id];
+        const magnitude = Math.min(Math.ceil(Math.abs(effect) / 10), 3);
+        const change = Math.sign(effect);
+
+        return (
+          <div key={id} className="flex items-center gap-1">
+            <Icon className={cn("w-3 h-3", change > 0 ? "text-green-400" : "text-red-400")} />
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: magnitude }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-1 h-1 rounded-full",
+                    change > 0 ? "bg-green-400" : "bg-red-400"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+
+export default function NarrativeCard({ card, onChoice, showPrescience }: NarrativeCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -116,6 +157,8 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
   const choiceOpacity = Math.min(Math.abs(dragX) / dragThreshold, 1);
   const cardOpacity = isAnimatingOut ? 0 : 1 - Math.abs(dragX) / (dragThreshold * 2.5);
 
+  const activeChoice = dragX > 0 ? card.choices[1] : card.choices[0];
+
   return (
     <div 
         className="w-full h-[470px] relative cursor-grab active:cursor-grabbing group"
@@ -128,8 +171,9 @@ export default function NarrativeCard({ card, onChoice }: NarrativeCardProps) {
         onTouchEnd={handleDragEnd}
     >
         {/* Choice overlay text */}
-       <div className="absolute top-4 left-0 right-0 h-16 flex items-center justify-center transition-opacity duration-200 z-30" style={{ opacity: choiceOpacity }}>
+       <div className="absolute top-4 left-0 right-0 h-16 flex flex-col items-center justify-center transition-opacity duration-200 z-30" style={{ opacity: choiceOpacity }}>
           <p className="font-headline text-primary text-xl text-center px-4 drop-shadow-lg">{choiceText}</p>
+           {showPrescience && activeChoice && <PrescienceDisplay effects={activeChoice.effects} />}
       </div>
       
       <div 
