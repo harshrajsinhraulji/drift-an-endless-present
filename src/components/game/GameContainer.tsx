@@ -60,6 +60,43 @@ export default function GameContainer() {
     }
   }, []);
 
+  const startNewGame = useCallback(() => {
+    setResources({
+      environment: INITIAL_RESOURCE_VALUE,
+      people: INITIAL_RESOURCE_VALUE,
+      army: INITIAL_RESOURCE_VALUE,
+      money: INITIAL_RESOURCE_VALUE,
+    });
+    // Shuffle main cards and prepend shuffled special event cards
+    const shuffledSpecialEvents = shuffleArray(specialEventCards);
+    const shuffledMainDeck = shuffleArray(gameCards.filter(c => !c.requiredFlags));
+    setDeck([...shuffledSpecialEvents, ...shuffledMainDeck]);
+    setCurrentCardIndex(0);
+    setGameState("playing");
+    setGameOverMessage("");
+    setLastEffects({});
+    setYear(1);
+    setStoryFlags(new Set());
+  }, []);
+
+  const loadGame = useCallback(() => {
+    if (!isClient) return;
+    const savedState = localStorage.getItem(SAVE_GAME_KEY);
+    if (savedState) {
+      const { resources, deck, currentCardIndex, year, storyFlags } = JSON.parse(savedState);
+      setResources(resources);
+      setDeck(deck);
+      setCurrentCardIndex(currentCardIndex);
+      setYear(year);
+      setStoryFlags(storyFlagsFromJSON(storyFlags || []));
+      setGameState("playing");
+      setLastEffects({});
+      setGameOverMessage("");
+    } else {
+      startNewGame();
+    }
+  }, [isClient, startNewGame]);
+
   useEffect(() => {
     if (isClient && gameState === "playing") {
       const saveState = {
@@ -78,61 +115,25 @@ export default function GameContainer() {
     }
   }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient]);
 
-  const loadGame = useCallback(() => {
-    if (!isClient) return;
-    const savedState = localStorage.getItem(SAVE_GAME_KEY);
-    if (savedState) {
-      const { resources, deck, currentCardIndex, year, storyFlags } = JSON.parse(savedState);
-      setResources(resources);
-      setDeck(deck);
-      setCurrentCardIndex(currentCardIndex);
-      setYear(year);
-      setStoryFlags(storyFlagsFromJSON(storyFlags || []));
-      setGameState("playing");
-      setLastEffects({});
-      setGameOverMessage("");
-    } else {
-      startNewGame();
-    }
-  }, [isClient]);
-
-  const startNewGame = useCallback(() => {
-    setResources({
-      environment: INITIAL_RESOURCE_VALUE,
-      people: INITIAL_RESOURCE_VALUE,
-      army: INITIAL_RESOURCE_VALUE,
-      money: INITIAL_RESOURCE_VALUE,
-    });
-    // Shuffle main cards and prepend shuffled special event cards
-    const shuffledSpecialEvents = shuffleArray(specialEventCards);
-    const shuffledMainDeck = shuffleArray(gameCards);
-    setDeck([...shuffledSpecialEvents, ...shuffledMainDeck]);
-    setCurrentCardIndex(0);
-    setGameState("playing");
-    setGameOverMessage("");
-    setLastEffects({});
-    setYear(1);
-    setStoryFlags(new Set());
-  }, []);
 
   const getNextCard = () => {
     let potentialDeck = [...deck];
     let potentialIndex = currentCardIndex + 1;
   
     // Function to check if a card is valid to be drawn
-    const isCardValid = (card: CardData, flags: StoryFlags, currentDeck: CardData[]) => {
-      const alreadyInDeck = currentDeck.some(dCard => dCard.id === card.id);
-      const requiredFlagsMet = !card.requiredFlags || card.requiredFlags.every(flag => flags.has(flag));
-      const blockedByFlagsMet = !card.blockedByFlags || !card.blockedByFlags.some(flag => flags.has(flag));
+    const isCardValid = (card: CardData) => {
+      const alreadyInDeck = deck.some(dCard => dCard.id === card.id);
+      const requiredFlagsMet = !card.requiredFlags || card.requiredFlags.every(flag => storyFlags.has(flag));
+      const blockedByFlagsMet = !card.blockedByFlags || !card.blockedByFlags.some(flag => storyFlags.has(flag));
       return !alreadyInDeck && requiredFlagsMet && blockedByFlagsMet;
     };
   
     // Check for story-specific cards that should be injected
-    const storyCardsToInject = gameCards.filter(card => isCardValid(card, storyFlags, deck));
+    const storyCardsToInject = gameCards.filter(isCardValid);
   
     if (storyCardsToInject.length > 0) {
       // Inject the first valid story card to be the next one
-      const newDeck = [...deck.slice(0, potentialIndex), storyCardsToInject[0], ...deck.slice(potentialIndex)];
+      const newDeck = [...deck.slice(0, potentialIndex), ...storyCardsToInject, ...deck.slice(potentialIndex)];
       setDeck(newDeck);
       return potentialIndex;
     }
@@ -140,7 +141,7 @@ export default function GameContainer() {
     // If no story card, or we are at the end of the deck, reshuffle and continue
     if (potentialIndex >= potentialDeck.length) {
       const seenCardIds = new Set(potentialDeck.map(c => c.id));
-      const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c));
+      const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c) && !c.requiredFlags);
       const newShuffledMainDeck = shuffleArray(unseenMainCards.length > 0 ? unseenMainCards : gameCards.filter(c => !c.isSpecial && !c.requiredFlags));
       
       const newDeck = [...potentialDeck, ...newShuffledMainDeck];
@@ -152,7 +153,7 @@ export default function GameContainer() {
         potentialIndex++;
         if (potentialIndex >= potentialDeck.length) {
              const seenCardIds = new Set(potentialDeck.map(c => c.id));
-             const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c));
+             const unseenMainCards = gameCards.filter(c => !c.isSpecial && !seenCardIds.has(c) && !c.requiredFlags);
              const newShuffledMainDeck = shuffleArray(unseenMainCards.length > 0 ? unseenMainCards : gameCards.filter(c => !c.isSpecial && !c.requiredFlags));
       
             const newDeck = [...potentialDeck, ...newShuffledMainDeck];
@@ -187,10 +188,7 @@ export default function GameContainer() {
     setYear(y => y + 1);
 
     // Special ending for the star child arc
-    if (choice.setFlag === "studied_star" && newResources.people <= 0) {
-        gameOverTrigger = true;
-        message = gameOverConditions.studied_star_ending;
-    } else if (currentCard?.id === 201 && choice.text === "Embrace the power.") {
+    if (currentCard?.id === 201 && choice.text === "Embrace the power.") {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
     } else {
