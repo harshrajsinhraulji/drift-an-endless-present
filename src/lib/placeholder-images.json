@@ -53,6 +53,30 @@
       "description": "The Lead Astronomer.",
       "imageUrl": "https://images.unsplash.com/photo-1598495944122-1b1e42813586?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhbmNpZW50JTIwYXN0cm9ub21lcnxlbnwwfHx8fDE3NjIxNDEzNTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "ancient astronomer"
+    },
+    {
+      "id": "char-cultist",
+      "description": "A charismatic cult leader.",
+      "imageUrl": "https://images.unsplash.com/photo-1654517817804-61a67051e184?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkYXJrJTIwcHJvcGhldHxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dark prophet"
+    },
+    {
+      "id": "char-alchemist",
+      "description": "A hopeful alchemist.",
+      "imageUrl": "https://images.unsplash.com/photo-1739323147230-d17c6371178a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmNpZW50JTIwc2NpZW50aXN0fGVufDB8fHx8MTc2MTk1MDA5MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient scientist"
+    },
+    {
+      "id": "char-scribe",
+      "description": "A studious scribe.",
+      "imageUrl": "https://images.unsplash.com/photo-1662404400395-3266bf10bd15?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmNpZW50JTIwc2Nob2xhcnxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ancient scholar"
+    },
+    {
+      "id": "char-philosopher",
+      "description": "A thoughtful philosopher.",
+      "imageUrl": "https://images.unsplash.com/photo-1629097666037-bacf8a44da14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3aXNlJTIwdGhpbmtlcnxlbnwwfHx8fDE3NjE5NTAwOTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wise thinker"
     }
   ]
 }

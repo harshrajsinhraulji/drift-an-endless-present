@@ -191,6 +191,86 @@ export const gameCards: CardData[] = [
     requiredFlags: ["met_astronomer"],
     blockedByFlags: ["studied_star"],
   },
+    {
+    id: 12,
+    character: "Cult Leader",
+    imageId: "char-cultist",
+    text: "The people flock to my teachings, seeking solace. Embrace our movement, and they will be yours. Suppress us, and risk their wrath.",
+    choices: [
+      {
+        text: "Embrace the new cult.",
+        effects: { people: 20, army: -10 },
+      },
+      {
+        text: "This is heresy. Arrest them.",
+        effects: { people: -15, army: 10 },
+      },
+    ],
+  },
+  {
+    id: 13,
+    character: "Chief Alchemist",
+    imageId: "char-alchemist",
+    text: "Pharaoh, my guild is on the verge of a breakthrough: turning lead into gold! We require a significant investment to complete our Great Work.",
+    choices: [
+      {
+        text: "Fund their research.",
+        effects: { money: -20, environment: 10 },
+      },
+      {
+        text: "This is folly. No more funds.",
+        effects: { money: 5, people: -5 },
+      },
+    ],
+  },
+  {
+    id: 14,
+    character: "General",
+    imageId: "char-general",
+    text: "Bandits are raiding caravans on the spice road. We can send a detachment, but it will thin our defenses.",
+    choices: [
+      {
+        text: "Secure the trade routes.",
+        effects: { money: 10, army: -15 },
+      },
+      {
+        text: "The merchants must protect themselves.",
+        effects: { money: -10, people: -5 },
+      },
+    ],
+  },
+  {
+    id: 15,
+    character: "Scribe",
+    imageId: "char-scribe",
+    text: "I have found an ancient map in the library. It supposedly leads to a hidden oasis, a source of great vitality for the land.",
+    choices: [
+      {
+        text: "Mount an expedition.",
+        effects: { environment: 20, money: -10 },
+      },
+      {
+        text: "It is likely a myth. Ignore it.",
+        effects: { people: -5 },
+      },
+    ],
+  },
+  {
+    id: 16,
+    character: "Philosopher",
+    imageId: "char-philosopher",
+    text: "I have been teaching the youth to question everything, even your divine right to rule. This new way of thinking could lead to innovation or chaos.",
+    choices: [
+      {
+        text: "Encourage this new philosophy.",
+        effects: { people: 15, army: -10 },
+      },
+      {
+        text: "Silence this dangerous thinker.",
+        effects: { people: -10, army: 5 },
+      },
+    ],
+  },
   {
     id: 201,
     character: "Lead Astronomer",
