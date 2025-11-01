@@ -89,11 +89,19 @@ export default function GameContainer() {
       army: INITIAL_RESOURCE_VALUE,
       money: INITIAL_RESOURCE_VALUE,
     });
+    
     const tutorialCard = gameCards.find(c => c.id === 0);
     const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
-    const initialDeck = tutorialCard ? [tutorialCard, ...shuffledMainDeck] : shuffledMainDeck;
+    // Only show the tutorial card on a true new game, not after a "mercy" restart.
+    const includeTutorial = !flags.has('creator_github_mercy');
+    let initialDeck: CardData[] = [];
+    if (includeTutorial && tutorialCard) {
+      initialDeck = [tutorialCard, ...shuffledMainDeck];
+    } else {
+      initialDeck = shuffledMainDeck;
+    }
     
     setDeck(initialDeck);
     setCurrentCardIndex(0);
@@ -397,3 +405,5 @@ export default function GameContainer() {
     </div>
   );
 }
+
+    
