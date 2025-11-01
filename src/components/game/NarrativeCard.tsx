@@ -179,8 +179,8 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
       {isFirstTurn && (
         <>
           <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-20">
-            <ChevronLeft className="w-16 h-16 text-primary/50 animate-pulse -ml-24" />
-            <ChevronRight className="w-16 h-16 text-primary/50 animate-pulse -mr-24" />
+            <ChevronLeft className="w-16 h-16 text-primary/30 animate-pulse-subtle -ml-24" />
+            <ChevronRight className="w-16 h-16 text-primary/30 animate-pulse-subtle -mr-24" />
           </div>
         </>
       )}
@@ -222,3 +222,5 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     </div>
   );
 }
+
+    
