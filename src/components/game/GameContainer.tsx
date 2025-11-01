@@ -220,8 +220,27 @@ export default function GameContainer() {
     if (choice.setFlag === 'creator_github_mercy') {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
-      // This is a "second chance" from a Game Over state.
-      startNewGame(newFlags);
+      
+      // THIS IS THE SECOND CHANCE LOGIC - reset resources and deck, but keep the year and flags
+      setResources({
+        environment: INITIAL_RESOURCE_VALUE,
+        people: INITIAL_RESOURCE_VALUE,
+        army: INITIAL_RESOURCE_VALUE,
+        money: INITIAL_RESOURCE_VALUE,
+      });
+
+      const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
+      const shuffledMainDeck = shuffleArray(regularCards);
+
+      setDeck(shuffledMainDeck);
+      setCurrentCardIndex(0);
+      setGameState("playing");
+      setGameOverMessage("");
+      setLastEffects({});
+      setStoryFlags(newFlags);
+      setPrescienceCharges(newFlags.has('creator_linkedin_prescience') ? 10 : 0);
+      setShowPrescienceThisTurn(false);
+
     } else {
       // If they refuse help, it's game over for real.
       setGameState("gameover");
@@ -407,5 +426,7 @@ export default function GameContainer() {
     </div>
   );
 }
+
+    
 
     
