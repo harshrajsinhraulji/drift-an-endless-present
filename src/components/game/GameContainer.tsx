@@ -230,7 +230,9 @@ export default function GameContainer() {
 
 
   const handleChoice = (choice: Choice) => {
-    if (gameState !== 'playing') return;
+    const currentCard = deck[currentCardIndex];
+    if (gameState !== 'playing' || !currentCard) return;
+
     if (choice.action) choice.action();
 
     setLastEffects(choice.effects);
@@ -259,9 +261,9 @@ export default function GameContainer() {
     
     setResources(newResources);
     
-    const nextYear = currentCard?.id !== 0 ? year + 1 : year;
-    if (currentCard?.id !== 0) {
-      setYear(nextYear);
+    // Only advance the year for non-tutorial cards
+    if (currentCard.id !== 0) {
+      setYear(y => y + 1);
     }
 
 
@@ -269,7 +271,7 @@ export default function GameContainer() {
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
-    } else if (nextYear >= 50) {
+    } else if (year + 1 >= 50) { // Check against upcoming year
         // Golden Age Victory Condition
         const isBalanced = Object.values(newResources).every(v => v > 30 && v < 70);
         if (isBalanced) {
@@ -405,5 +407,3 @@ export default function GameContainer() {
     </div>
   );
 }
-
-    
