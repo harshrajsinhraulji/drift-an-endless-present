@@ -67,16 +67,16 @@ export const getCardText = (card: CardData, resources: Record<ResourceId, number
 export const gameCards: CardData[] = [
   {
     id: 0,
-    character: "Tutorial",
+    character: "The Advisor",
     icon: "Scroll",
-    text: "You are the ruler. Your choices shape the kingdom. Swipe left or right to decide its fate.",
+    text: "You are the ruler. The kingdom awaits. Swipe left or right with your thumb to make your first decree.",
     choices: [
         {
-            text: "Drag Left",
+            text: "I understand",
             effects: {},
         },
         {
-            text: "Drag Right",
+            text: "I understand",
             effects: {},
         },
     ]

@@ -426,7 +426,3 @@ export default function GameContainer() {
     </div>
   );
 }
-
-    
-
-    

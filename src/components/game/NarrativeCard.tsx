@@ -206,6 +206,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
             </div>
             <h2 className="font-headline text-xl font-bold text-primary mb-2">{card.character}</h2>
             <p className="text-lg font-body text-foreground/90 mb-4 min-h-[100px]">{card.text}</p>
+
           </CardContent>
            <CardFooter className="p-4 flex justify-between items-end min-h-[90px] gap-4">
             <div style={{ opacity: leftChoiceOpacity }} className="transition-opacity text-center w-1/2 px-2">
@@ -222,5 +223,3 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     </div>
   );
 }
-
-    
