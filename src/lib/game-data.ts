@@ -534,6 +534,7 @@ export const gameOverConditions: Record<string, string> = {
   money_low: "The kingdom is bankrupt. Your authority crumbles as chaos ensues.",
   money_high: "Economic collapse due to extreme inflation has brought your reign to an end.",
   studied_star_ending: "You merged with the cosmic entity. You are no longer human, but a god. Your kingdom is a paradise of crystalline thought, but the laughter of children is never heard again. You have won, but at what cost?",
+  golden_age: "You have ushered in a Golden Age. Your reign is celebrated for generations, a testament to balance and wisdom. Your kingdom thrives, a beacon in the endless sands of time. You have won.",
 };
 
 export const storyFlagDescriptions: Record<StoryFlag, string> = {

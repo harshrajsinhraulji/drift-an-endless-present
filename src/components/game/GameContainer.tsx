@@ -246,9 +246,9 @@ export default function GameContainer() {
     
     setResources(newResources);
     
-    // Don't advance year on tutorial card
+    const nextYear = currentCard?.id !== 0 ? year + 1 : year;
     if (currentCard?.id !== 0) {
-      setYear(y => y + 1);
+      setYear(nextYear);
     }
 
 
@@ -256,7 +256,16 @@ export default function GameContainer() {
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
-    } else {
+    } else if (nextYear >= 50) {
+        // Golden Age Victory Condition
+        const isBalanced = Object.values(newResources).every(v => v > 30 && v < 70);
+        if (isBalanced) {
+            gameOverTrigger = true;
+            message = gameOverConditions.golden_age;
+        }
+    }
+    
+    if (!gameOverTrigger) {
         for (const key in newResources) {
             const resourceId = key as ResourceId;
             if (newResources[resourceId] <= 0) {
