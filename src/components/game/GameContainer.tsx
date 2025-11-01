@@ -155,6 +155,7 @@ export default function GameContainer() {
         let i = startIndex;
         while (i < currentDeck.length) {
             const card = currentDeck[i];
+            if (!card) return -1; // Added safety check
             const isBlocked = card.blockedByFlags?.some(flag => storyFlags.has(flag));
             if (!isBlocked) {
                 return i;
@@ -175,7 +176,8 @@ export default function GameContainer() {
     if (storyCardsToInject.length > 0) {
         newDeck.splice(nextIndex, 0, ...storyCardsToInject);
         setDeck(newDeck);
-        return findNextValidCardIndex(nextIndex, newDeck);
+        const nextValid = findNextValidCardIndex(nextIndex, newDeck);
+        if (nextValid !== -1) return nextValid;
     }
 
     let validNextIndex = findNextValidCardIndex(nextIndex, newDeck);
@@ -187,7 +189,8 @@ export default function GameContainer() {
         const reshuffleableCards = gameCards.filter(c => 
             !c.isSpecial && 
             !c.requiredFlags && 
-            seenStandardCardIds.has(c.id)
+            seenStandardCardIds.has(c.id) &&
+            c.id !== 0 // Don't reshuffle tutorial card
         );
 
         const newShuffledCards = shuffleArray(reshuffleableCards);
@@ -209,8 +212,10 @@ export default function GameContainer() {
     if (choice.setFlag === 'creator_github_mercy') {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
+      // This is a "second chance" from a Game Over state.
       startNewGame(newFlags);
     } else {
+      // If they refuse help, it's game over for real.
       setGameState("gameover");
     }
   }
@@ -281,12 +286,13 @@ export default function GameContainer() {
         }
     }
 
-    if (year > 10 && !storyFlags.has('creator_linkedin_prescience') && Math.random() < 0.2) {
+    if (year > 10 && !storyFlags.has('creator_linkedin_prescience') && !deck.some(c => c.id === 303) && Math.random() < 0.2) {
       const creatorCard = gameCards.find(c => c.id === 303);
       if(creatorCard) {
-        const newDeck = [creatorCard, ...deck.slice(currentCardIndex + 1)];
+        const newDeck = [...deck];
+        newDeck.splice(currentCardIndex + 1, 0, creatorCard);
         setDeck(newDeck);
-        setCurrentCardIndex(0);
+        setCurrentCardIndex(currentCardIndex + 1);
         return;
       }
     }
