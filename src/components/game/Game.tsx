@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useContext } from "react";
@@ -241,11 +242,11 @@ export default function Game() {
       setGameState("playing");
       setGameOverMessage("");
       setLastEffects({});
-      setYear(year); // Keep the year
       setStoryFlags(newFlags);
       setPrescienceCharges(newFlags.has('creator_linkedin_prescience') ? 10 : 0);
       setShowPrescienceThisTurn(false);
       setPrescienceWasUsed(false);
+      // Keep the year by not calling setYear
 
     } else {
       // If they refuse help, it's game over for real.
@@ -273,9 +274,10 @@ export default function Game() {
     
     if (prescienceWasUsed) {
         setPrescienceCharges(p => p - 1);
+        setPrescienceWasUsed(false);
     }
     setShowPrescienceThisTurn(false);
-    setPrescienceWasUsed(false);
+    
 
     let newResources = { ...resources };
     let gameOverTrigger = false;
@@ -287,7 +289,7 @@ export default function Game() {
     
     setResources(newResources);
     
-    // Only advance the year for non-special cards
+    // Only advance the year for non-special, non-tutorial cards
     if (currentCard.id !== 0 && currentCard.id !== 304) {
       setYear(y => y + 1);
     }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ export default function GameContainer() {
       }
     } catch (error) {
       console.error("Could not read from localStorage", error);
+      // If we can't read LS, default to not showing intro to avoid breaking the game
       setShowIntro(false);
     }
   }, []);
