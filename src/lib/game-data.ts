@@ -8,7 +8,8 @@ export type StoryFlag =
   | "plague_allowed_ship"
   | "plague_started"
   | "plague_cured_by_sacrifice"
-  | "plague_cured_by_isolation";
+  | "plague_cured_by_isolation"
+  | "creator_mercy_acknowledged";
 
 export interface Choice {
   text: string;
@@ -464,6 +465,27 @@ export const gameCards: CardData[] = [
     ],
     isSpecial: true,
   },
+  {
+    id: 304,
+    character: "Harshrajsinh Raulji",
+    icon: "Github",
+    text: "Thank you for your support! As promised, your reign is restored. A small tip: balance is key. Extremes in any resource will lead to your downfall.",
+    choices: [
+        {
+            text: "I will remember.",
+            effects: {},
+            setFlag: "creator_mercy_acknowledged",
+        },
+        {
+            text: "Let's continue.",
+            effects: {},
+            setFlag: "creator_mercy_acknowledged",
+        },
+    ],
+    isSpecial: true,
+    requiredFlags: ["creator_github_mercy"],
+    blockedByFlags: ["creator_mercy_acknowledged"],
+  }
 ];
 
 
@@ -546,4 +568,5 @@ export const storyFlagDescriptions: Record<StoryFlag, string> = {
   plague_started: "A dreadful plague has begun to spread through your kingdom.",
   plague_cured_by_sacrifice: "You sacrificed the health of your rivers to find a cure for the plague.",
   plague_cured_by_isolation: "You contained the plague with brutal quarantine measures, at great cost to your people.",
+  creator_mercy_acknowledged: "You have acknowledged the Creator's intervention."
 }

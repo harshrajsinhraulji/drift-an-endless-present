@@ -221,7 +221,6 @@ export default function GameContainer() {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       
-      // THIS IS THE SECOND CHANCE LOGIC - reset resources and deck, but keep the year and flags
       setResources({
         environment: INITIAL_RESOURCE_VALUE,
         people: INITIAL_RESOURCE_VALUE,
@@ -232,7 +231,11 @@ export default function GameContainer() {
       const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
       const shuffledMainDeck = shuffleArray(regularCards);
 
-      setDeck(shuffledMainDeck);
+      // Inject the 'thank you' card
+      const thankYouCard = gameCards.find(c => c.id === 304);
+      const finalDeck = thankYouCard ? [thankYouCard, ...shuffledMainDeck] : shuffledMainDeck;
+
+      setDeck(finalDeck);
       setCurrentCardIndex(0);
       setGameState("playing");
       setGameOverMessage("");
@@ -280,8 +283,8 @@ export default function GameContainer() {
     
     setResources(newResources);
     
-    // Only advance the year for non-tutorial cards
-    if (currentCard.id !== 0) {
+    // Only advance the year for non-special cards
+    if (currentCard.id !== 0 && currentCard.id !== 304) {
       setYear(y => y + 1);
     }
 
@@ -409,7 +412,7 @@ export default function GameContainer() {
             />
         )}
       </div>
-      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || currentCard?.id === 0 ? 0 : 1}}>{year}</p>
+      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || (currentCard?.id === 0 || currentCard?.id === 304) ? 0 : 1}}>{year}</p>
       <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
        <div className="absolute bottom-4 right-4 flex items-center gap-2">
             {storyFlags.has('creator_linkedin_prescience') && (
