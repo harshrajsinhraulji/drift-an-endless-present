@@ -82,7 +82,7 @@ export default function GameContainer() {
     }
   }, [gameState, bgmVolume]);
 
-  const startNewGame = useCallback(() => {
+  const startNewGame = useCallback((flags: StoryFlags = new Set()) => {
     setResources({
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
@@ -101,8 +101,8 @@ export default function GameContainer() {
     setGameOverMessage("");
     setLastEffects({});
     setYear(1);
-    setStoryFlags(new Set());
-    setPrescienceCharges(0);
+    setStoryFlags(flags);
+    setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
     setShowPrescienceThisTurn(false);
   }, []);
 
@@ -207,16 +207,9 @@ export default function GameContainer() {
     if (choice.action) choice.action();
     
     if (choice.setFlag === 'creator_github_mercy') {
-      setStoryFlags(prev => new Set(prev).add('creator_github_mercy'));
-      setResources({
-        environment: INITIAL_RESOURCE_VALUE,
-        people: INITIAL_RESOURCE_VALUE,
-        army: INITIAL_RESOURCE_VALUE,
-        money: INITIAL_RESOURCE_VALUE,
-      });
-      setGameState('playing');
-      setLastEffects({});
-      startNewGame(); // Restart the deck
+      const newFlags = new Set(storyFlags);
+      newFlags.add('creator_github_mercy');
+      startNewGame(newFlags);
     } else {
       setGameState("gameover");
     }
@@ -338,7 +331,7 @@ export default function GameContainer() {
   }
 
   if (gameState === "title") {
-    return <TitleScreen onStart={startNewGame} onContinue={loadGame} hasSave={hasSave} />;
+    return <TitleScreen onStart={() => startNewGame()} onContinue={loadGame} hasSave={hasSave} />;
   }
 
   if (gameState === "creator_intervention" && creatorCard) {
@@ -389,3 +382,5 @@ export default function GameContainer() {
     </div>
   );
 }
+
+    
