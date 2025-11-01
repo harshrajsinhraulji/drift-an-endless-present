@@ -246,7 +246,7 @@ export default function Game() {
       setPrescienceCharges(newFlags.has('creator_linkedin_prescience') ? 10 : 0);
       setShowPrescienceThisTurn(false);
       setPrescienceWasUsed(false);
-      // Keep the year by not calling setYear
+      // The year is intentionally NOT reset here to give a "second chance"
 
     } else {
       // If they refuse help, it's game over for real.

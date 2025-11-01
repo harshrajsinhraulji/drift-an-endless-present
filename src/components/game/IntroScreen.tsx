@@ -47,7 +47,10 @@ export default function IntroScreen({ onFinish }: IntroScreenProps) {
 
     return (
         <div
-        className="flex h-screen w-screen cursor-pointer flex-col items-center justify-center bg-background animate-in fade-in-0 duration-1000"
+        className={cn(
+            "flex h-screen w-screen cursor-pointer flex-col items-center justify-center bg-background transition-opacity duration-1000",
+            isExiting ? "opacity-0" : "opacity-100 animate-in fade-in-0"
+        )}
         onClick={!isExiting ? handleClick : undefined}
         >
             <ChariotWheel isVisible={!isExiting} />
