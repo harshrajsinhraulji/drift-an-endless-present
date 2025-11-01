@@ -92,12 +92,17 @@ export default {
         'pulse-subtle': {
           '0%, 100%': { opacity: '0.3' },
           '50%': { opacity: '0.7' },
-        }
+        },
+        'spin-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'spin-slow': 'spin-slow 45s linear infinite',
       },
     },
   },
