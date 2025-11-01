@@ -56,6 +56,7 @@ export default function GameContainer() {
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const [prescienceCharges, setPrescienceCharges] = useState(0);
   const [showPrescienceThisTurn, setShowPrescienceThisTurn] = useState(false);
+  const [prescienceWasUsed, setPrescienceWasUsed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { bgmVolume } = useContext(SoundContext);
 
@@ -94,7 +95,6 @@ export default function GameContainer() {
     const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
-    // Only show the tutorial card on a true new game, not after a "mercy" restart.
     const includeTutorial = !flags.has('creator_github_mercy');
     let initialDeck: CardData[] = [];
     if (includeTutorial && tutorialCard) {
@@ -112,6 +112,7 @@ export default function GameContainer() {
     setStoryFlags(flags);
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
     setShowPrescienceThisTurn(false);
+    setPrescienceWasUsed(false);
   }, []);
 
   const loadGame = useCallback(() => {
@@ -129,6 +130,7 @@ export default function GameContainer() {
       setLastEffects({});
       setGameOverMessage("");
       setShowPrescienceThisTurn(false);
+      setPrescienceWasUsed(false);
     } else {
       startNewGame();
     }
@@ -243,6 +245,7 @@ export default function GameContainer() {
       setStoryFlags(newFlags);
       setPrescienceCharges(newFlags.has('creator_linkedin_prescience') ? 10 : 0);
       setShowPrescienceThisTurn(false);
+      setPrescienceWasUsed(false);
 
     } else {
       // If they refuse help, it's game over for real.
@@ -268,10 +271,11 @@ export default function GameContainer() {
       }
     }
     
-    if (showPrescienceThisTurn) {
+    if (prescienceWasUsed) {
         setPrescienceCharges(p => p - 1);
     }
     setShowPrescienceThisTurn(false);
+    setPrescienceWasUsed(false);
 
     let newResources = { ...resources };
     let gameOverTrigger = false;
@@ -357,6 +361,9 @@ export default function GameContainer() {
 
   const togglePrescience = () => {
     if (prescienceCharges > 0) {
+      if (!showPrescienceThisTurn) {
+        setPrescienceWasUsed(true);
+      }
       setShowPrescienceThisTurn(!showPrescienceThisTurn);
     }
   };
@@ -416,7 +423,7 @@ export default function GameContainer() {
       <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
        <div className="absolute bottom-4 right-4 flex items-center gap-2">
             {storyFlags.has('creator_linkedin_prescience') && (
-              <Button onClick={togglePrescience} variant={showPrescienceThisTurn ? 'default' : 'outline'} size="sm" className="text-xs font-headline" disabled={prescienceCharges <= 0}>
+              <Button onClick={togglePrescience} variant={showPrescienceThisTurn ? 'default' : 'outline'} size="sm" className="text-xs font-headline" disabled={prescienceCharges <= 0 && !showPrescienceThisTurn}>
                 <Eye className="w-4 h-4 mr-1" />
                 {prescienceCharges}
               </Button>
@@ -429,3 +436,5 @@ export default function GameContainer() {
     </div>
   );
 }
+
+    
