@@ -167,7 +167,7 @@ export const useGame = (user: User | null) => {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
-        setHasSave(false);
+        setHasSave(false); // Immediately update state
       } catch (err) {
         console.error("Failed to delete checkpoint:", err);
       }
@@ -248,7 +248,7 @@ export const useGame = (user: User | null) => {
       }
     };
     checkSave();
-  }, [user, firestore, gameState]);
+  }, [user, firestore]);
 
   useEffect(() => {
     if (gameState !== 'playing' || !user || user.isAnonymous) return;
@@ -532,5 +532,3 @@ export const useGame = (user: User | null) => {
     deleteSave,
   };
 };
-
-    

@@ -67,7 +67,7 @@ export default function Game() {
   const cardText = currentCard ? getCardText(currentCard, resources) : "";
   const creatorCard = gameCards.find(c => c.id === 302);
   
-  if (isUserLoading || (user && isGameLoading)) {
+  if (isUserLoading || (user && gameState !== 'title' && isGameLoading)) {
     return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
