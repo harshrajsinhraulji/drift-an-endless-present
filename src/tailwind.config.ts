@@ -85,7 +85,7 @@ export default {
           from: {
             height: 'var(--radix-accordion-content-height)',
           },
-to: {
+          to: {
             height: '0',
           },
         },
