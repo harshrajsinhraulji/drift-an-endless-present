@@ -7,7 +7,7 @@ import type {
   DocumentData,
   FirestoreError,
 } from 'firebase/firestore';
-import { onSnapshot } from 'firebase/firestore';
+import { onSnapshot, collection, getFirestore } from 'firebase/firestore'; // Corrected: No direct import needed, but good practice.
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
@@ -45,8 +45,11 @@ export function useCollection<T extends DocumentData>(
       (err) => {
         setError(err);
         setIsLoading(false);
+        // Corrected & Hardened: Get the path from the underlying _query property.
+        // This provides the correct path for both CollectionReferences and Queries.
+        const path = (query as any)._query.path.segments.join('/');
         const permissionError = new FirestorePermissionError({
-            path: 'path' in query ? query.path : 'unknown path',
+            path: path,
             operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
@@ -54,7 +57,7 @@ export function useCollection<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [query]); // CORRECTED: Dependency is now the query object itself. This relies on the calling component to memoize the query.
+  }, [query]);
 
   return { data, isLoading, error };
 }
