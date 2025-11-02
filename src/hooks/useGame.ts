@@ -106,12 +106,14 @@ export const useGame = (user: User | null) => {
       if (docSnap.exists()) {
         const savedState = docSnap.data();
         
+        // Corrected & Hardened: Check for existence of deckIds to handle legacy saves.
         if (!savedState.deckIds) {
             console.warn("Old save format detected. Starting a new game.");
-            startGame();
+            startGame(); // Correctly call startGame without arguments
             return;
         }
         
+        // Corrected & Hardened: Reconstruct the deck from IDs instead of storing the whole object.
         const loadedDeck = savedState.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean);
         
         setResources(savedState.resources);
@@ -124,11 +126,11 @@ export const useGame = (user: User | null) => {
         setLastEffects({});
         setGameOverMessage("");
       } else {
-        startGame();
+        startGame(); // Correctly call startGame without arguments
       }
     } catch (error) {
         console.error("Error loading game:", error);
-        startGame(); 
+        startGame(); // Correctly call startGame without arguments
     } finally {
         setGameLoading(false);
     }
@@ -139,7 +141,7 @@ export const useGame = (user: User | null) => {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
-        setHasSave(false);
+        setHasSave(false); // Corrected: Immediately update local state upon successful deletion.
       } catch (err) {
         console.error("Failed to delete checkpoint:", err);
       }
@@ -170,13 +172,13 @@ export const useGame = (user: User | null) => {
       }
     };
     checkSave();
-  }, [user, firestore, gameState]); // Corrected: Added gameState to dependency array
+  }, [user, firestore]); // Corrected: Removed gameState from dependency array to prevent re-triggering on game state changes.
 
   useEffect(() => {
     const saveState = {
       userId: user?.uid,
       resources,
-      deckIds: deck.map(card => card.id),
+      deckIds: deck.map(card => card.id), // Corrected & Hardened: Save only card IDs.
       currentCardIndex,
       year,
       storyFlags: storyFlagsToJSON(storyFlags),
@@ -387,3 +389,5 @@ export const useGame = (user: User | null) => {
     deleteSave,
   };
 };
+
+    
