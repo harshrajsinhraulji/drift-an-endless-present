@@ -1,12 +1,16 @@
 
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { ResourceId, CardData, Choice, StoryFlag } from '@/lib/game-data';
 import {
   gameCards,
   INITIAL_RESOURCE_VALUE,
   gameOverConditions,
 } from '@/lib/game-data';
+import type { User } from 'firebase/auth';
+import { useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
@@ -22,14 +26,12 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return newArray;
 };
 
-const SAVE_GAME_KEY = 'drift-save-game';
-
 // Helper function to convert Set to Array for JSON serialization
 const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
 // Helper function to convert Array back to Set after JSON parsing
 const storyFlagsFromJSON = (flags: StoryFlag[]) => new Set(flags);
 
-export const useGame = () => {
+export const useGame = (user: User | null) => {
   const [resources, setResources] = useState<Resources>({
     environment: INITIAL_RESOURCE_VALUE,
     people: INITIAL_RESOURCE_VALUE,
@@ -42,17 +44,11 @@ export const useGame = () => {
   const [gameOverMessage, setGameOverMessage] = useState('');
   const [lastEffects, setLastEffects] = useState<Partial<Record<ResourceId, number>>>({});
   const [year, setYear] = useState(0);
-  const [hasSave, setHasSave] = useState(false);
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
   const [prescienceCharges, setPrescienceCharges] = useState(0);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    if (localStorage.getItem(SAVE_GAME_KEY)) {
-      setHasSave(true);
-    }
-  }, []);
+  const [isGameLoading, setGameLoading] = useState(true);
+  const [hasSave, setHasSave] = useState(false);
+  const firestore = useFirestore();
 
   const startNewGame = useCallback((flags: StoryFlags = new Set()) => {
     setResources({
@@ -84,65 +80,92 @@ export const useGame = () => {
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
   }, []);
 
-  const loadGame = useCallback(() => {
-    if (!isClient) return;
-    const savedState = localStorage.getItem(SAVE_GAME_KEY);
-    if (savedState) {
-      const { resources, deck, currentCardIndex, year, storyFlags, prescienceCharges } = JSON.parse(savedState);
-      setResources(resources);
-      setDeck(deck);
-      setCurrentCardIndex(currentCardIndex);
-      setYear(year);
-      setStoryFlags(storyFlagsFromJSON(storyFlags || []));
-      setPrescienceCharges(prescienceCharges || 0);
+  const loadGame = useCallback(async () => {
+    if (!user || !firestore) return;
+    const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+    const docSnap = await getDoc(checkpointRef);
+
+    if (docSnap.exists()) {
+      const savedState = docSnap.data();
+      setResources(savedState.resources);
+      setDeck(savedState.deck);
+      setCurrentCardIndex(savedState.currentCardIndex);
+      setYear(savedState.year);
+      setStoryFlags(storyFlagsFromJSON(savedState.storyFlags || []));
+      setPrescienceCharges(savedState.prescienceCharges || 0);
       setGameState("playing");
       setLastEffects({});
       setGameOverMessage("");
     } else {
       startNewGame();
     }
-  }, [isClient, startNewGame]);
+  }, [user, firestore, startNewGame]);
 
   useEffect(() => {
-    if (isClient && gameState === "playing") {
+    const checkSave = async () => {
+      if (!user || !firestore) {
+        setGameLoading(false);
+        setGameState('title');
+        return;
+      }
+      setGameLoading(true);
+      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+      try {
+        const docSnap = await getDoc(checkpointRef);
+        const savedGameExists = docSnap.exists();
+        setHasSave(savedGameExists);
+        if (savedGameExists) {
+            await loadGame();
+        } else {
+            // This is a new user or a user without a save. Go to title screen to let them start.
+            setGameState('title');
+        }
+      } catch (error) {
+        console.error("Error checking for save game:", error);
+        setGameState('title'); // Fallback to title on error
+      } finally {
+        setGameLoading(false);
+      }
+    };
+    checkSave();
+  }, [user, firestore, loadGame]);
+
+  useEffect(() => {
+    if (user && firestore && gameState === "playing") {
       const saveState = {
+        userId: user.uid,
         resources,
         deck,
         currentCardIndex,
         year,
         storyFlags: storyFlagsToJSON(storyFlags),
         prescienceCharges,
+        updatedAt: new Date().toISOString(),
       };
-      localStorage.setItem(SAVE_GAME_KEY, JSON.stringify(saveState));
-      setHasSave(true);
+      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+      setDocumentNonBlocking(checkpointRef, saveState, { merge: true });
     }
-     if (isClient && (gameState === "title" || gameState === "gameover")) {
-      localStorage.removeItem(SAVE_GAME_KEY);
-      setHasSave(false);
-    }
-  }, [resources, deck, currentCardIndex, year, storyFlags, gameState, isClient, prescienceCharges]);
+  }, [user, firestore, gameState, resources, deck, currentCardIndex, year, storyFlags, prescienceCharges]);
 
 
   const getNextCard = useCallback(() => {
     let nextIndex = currentCardIndex + 1;
     let newDeck = [...deck];
 
-    // Function to find the next valid card in the current deck
     const findNextValidCardIndex = (startIndex: number, currentDeck: CardData[]) => {
         let i = startIndex;
         while (i < currentDeck.length) {
             const card = currentDeck[i];
-            if (!card) return -1; // Added safety check
+            if (!card) return -1;
             const isBlocked = card.blockedByFlags?.some(flag => storyFlags.has(flag));
             if (!isBlocked) {
                 return i;
             }
             i++;
         }
-        return -1; // No valid card found
+        return -1;
     };
     
-    // Check for any story cards that must be injected now
     const isInjectable = (card: CardData) => 
         !deck.some(dCard => dCard.id === card.id) &&
         card.requiredFlags?.every(flag => storyFlags.has(flag)) &&
@@ -159,24 +182,20 @@ export const useGame = () => {
 
     let validNextIndex = findNextValidCardIndex(nextIndex, newDeck);
     
-    // If no valid card is found, it's time to reshuffle.
     if (validNextIndex === -1) {
-        // Get all non-special, non-story-arc cards that have been seen
         const seenStandardCardIds = new Set(deck.slice(0, nextIndex).map(c => c.id));
         const reshuffleableCards = gameCards.filter(c => 
             !c.isSpecial && 
             !c.requiredFlags && 
             seenStandardCardIds.has(c.id) &&
-            c.id !== 0 // Don't reshuffle tutorial card
+            c.id !== 0
         );
 
         const newShuffledCards = shuffleArray(reshuffleableCards);
         
-        // Append the reshuffled cards to the deck
         const reshuffledDeck = [...newDeck, ...newShuffledCards];
         setDeck(reshuffledDeck);
         
-        // Find the next valid card in the newly extended deck
         validNextIndex = findNextValidCardIndex(nextIndex, reshuffledDeck);
     }
 
@@ -190,34 +209,17 @@ export const useGame = () => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       
-      setResources({
-        environment: INITIAL_RESOURCE_VALUE,
-        people: INITIAL_RESOURCE_VALUE,
-        army: INITIAL_RESOURCE_VALUE,
-        money: INITIAL_RESOURCE_VALUE,
-      });
-
-      const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
-      const shuffledMainDeck = shuffleArray(regularCards);
-
-      // Inject the 'thank you' card
+      startNewGame(newFlags);
       const thankYouCard = gameCards.find(c => c.id === 304);
-      const finalDeck = thankYouCard ? [thankYouCard, ...shuffledMainDeck] : shuffledMainDeck;
-
-      setDeck(finalDeck);
-      setCurrentCardIndex(0);
-      setGameState("playing");
-      setGameOverMessage("");
-      setLastEffects({});
-      setStoryFlags(newFlags);
-      setPrescienceCharges(newFlags.has('creator_linkedin_prescience') ? 10 : 0);
-      // The year is intentionally NOT reset here to give a "second chance"
+      if (thankYouCard) {
+        setDeck(currentDeck => [thankYouCard, ...currentDeck]);
+        setCurrentCardIndex(0);
+      }
 
     } else {
-      // If they refuse help, it's game over for real.
       setGameState("gameover");
     }
-  }, [storyFlags]);
+  }, [storyFlags, startNewGmae]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -247,18 +249,14 @@ export const useGame = () => {
     
     setResources(newResources);
     
-    // Only advance the year for non-special, non-tutorial cards
     if (currentCard.id !== 0 && currentCard.id !== 304) {
       setYear(y => y + 1);
     }
 
-
-    // Special ending for the star child arc
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
-    } else if (year + 1 >= 50) { // Check against upcoming year
-        // Golden Age Victory Condition
+    } else if (year + 1 >= 50) {
         const isBalanced = Object.values(newResources).every(v => v > 30 && v < 70);
         if (isBalanced) {
             gameOverTrigger = true;
@@ -282,7 +280,6 @@ export const useGame = () => {
         }
     }
     
-    // Mercy mechanic for low resources
     const isAnyResourceLow = Object.values(newResources).some(v => v > 0 && v < 15);
     if (!gameOverTrigger && isAnyResourceLow && Math.random() < 0.25 && !deck.some(c => c.id === 50)) {
         const mercyCard = gameCards.find(c => c.id === 50);
@@ -307,7 +304,10 @@ export const useGame = () => {
 
     if (gameOverTrigger) {
       setGameOverMessage(message);
-      if (isClient) localStorage.removeItem(SAVE_GAME_KEY);
+      if (user && firestore) {
+        const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+        setDocumentNonBlocking(checkpointRef, { deletedAt: new Date().toISOString() }, { merge: true });
+      }
 
       if (!storyFlags.has('creator_github_mercy')) {
         setGameState("creator_intervention");
@@ -320,12 +320,11 @@ export const useGame = () => {
        if (nextCardIndex !== -1) {
          setCurrentCardIndex(nextCardIndex);
        } else {
-         // This should theoretically not be reached with the new logic, but as a fallback:
          setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
          setGameState("gameover");
        }
     }
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, isClient]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore]);
 
   const returnToTitle = () => {
     setGameState("title");
@@ -342,7 +341,7 @@ export const useGame = () => {
     hasSave,
     storyFlags,
     prescienceCharges,
-    isClient,
+    isGameLoading,
     startNewGame,
     loadGame,
     handleChoice,
@@ -352,5 +351,3 @@ export const useGame = () => {
     setStoryFlags,
   };
 };
-
-    

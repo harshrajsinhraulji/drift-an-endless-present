@@ -14,8 +14,14 @@ import { Button } from "../ui/button";
 import { Eye } from "lucide-react";
 import { SoundContext } from "@/contexts/SoundContext";
 import { useGame } from '@/hooks/useGame';
+import type { User } from "firebase/auth";
 
-export default function Game() {
+interface GameProps {
+  user: User | null;
+  isLoading: boolean;
+}
+
+export default function Game({ user, isLoading }: GameProps) {
   const {
     resources,
     deck,
@@ -24,16 +30,16 @@ export default function Game() {
     gameOverMessage,
     lastEffects,
     year,
-    hasSave,
     storyFlags,
     prescienceCharges,
-    isClient,
+    isGameLoading,
     startNewGame,
     loadGame,
     handleChoice,
     handleCreatorIntervention,
     returnToTitle,
-  } = useGame();
+    hasSave,
+  } = useGame(user);
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const [showPrescienceThisTurn, setShowPrescienceThisTurn] = useState(false);
@@ -90,20 +96,20 @@ export default function Game() {
   const cardText = currentCard ? getCardText(currentCard, resources) : "";
   const creatorCard = gameCards.find(c => c.id === 302);
   
-  if (!isClient) {
+  if (isLoading || isGameLoading) {
     return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
             <div className="flex h-[470px] w-full items-center justify-center rounded-lg bg-card/50">
-                <h1 className="font-headline text-2xl text-primary">LOADING...</h1>
+                <h1 className="font-headline text-2xl text-primary animate-pulse">LOADING...</h1>
             </div>
             <div className="h-8" />
         </div>
     );
   }
 
-  if (gameState === "title") {
-    return <TitleScreen onStart={() => startNewGame()} onContinue={loadGame} hasSave={hasSave} />;
+  if (gameState === "title" || !user) {
+    return <TitleScreen onStart={startNewGame} onContinue={loadGame} hasSave={hasSave} />;
   }
 
   if (gameState === "creator_intervention" && creatorCard) {
