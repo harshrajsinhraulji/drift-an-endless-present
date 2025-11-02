@@ -1,0 +1,251 @@
+{
+  "entities": {
+    "Checkpoint": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Checkpoint",
+      "type": "object",
+      "description": "Represents a saved game state for CyberNation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the checkpoint."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this checkpoint. (Relationship: User 1:N Checkpoint)"
+        },
+        "checkpointName": {
+          "type": "string",
+          "description": "Name of the checkpoint."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the checkpoint was created.",
+          "format": "date-time"
+        },
+        "publicApproval": {
+          "type": "number",
+          "description": "The value of the publicApproval resource at the time of the checkpoint"
+        },
+        "treasury": {
+          "type": "number",
+          "description": "The value of the treasury resource at the time of the checkpoint"
+        },
+        "military": {
+          "type": "number",
+          "description": "The value of the military resource at the time of the checkpoint"
+        },
+        "narrativeCardId": {
+          "type": "string",
+          "description": "Identifier of the current card shown to the user"
+        },
+        "eventIds": {
+          "type": "array",
+          "description": "References to Events active on save. (Relationship: Checkpoint 1:N Event)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp"
+      ]
+    },
+    "Leaderboard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Leaderboard",
+      "type": "object",
+      "description": "Represents a leaderboard for CyberNation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the leaderboard."
+        },
+        "leaderboardName": {
+          "type": "string",
+          "description": "Name of the leaderboard (e.g., 'Highest Treasury', 'Longest Survival')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Short description of the leaderboard's criteria."
+        }
+      },
+      "required": [
+        "id",
+        "leaderboardName"
+      ]
+    },
+    "LeaderboardEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LeaderboardEntry",
+      "type": "object",
+      "description": "Represents a single entry on a leaderboard.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the leaderboard entry."
+        },
+        "leaderboardId": {
+          "type": "string",
+          "description": "Reference to the Leaderboard this entry belongs to. (Relationship: Leaderboard 1:N LeaderboardEntry)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who achieved this score. (Relationship: User 1:N LeaderboardEntry)"
+        },
+        "score": {
+          "type": "number",
+          "description": "The score achieved by the user on this leaderboard."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the score was achieved.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "leaderboardId",
+        "userId",
+        "score",
+        "timestamp"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the CyberNation game.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the player."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
+    },
+    "Event": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Event",
+      "type": "object",
+      "description": "Represents a game event for CyberNation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the event."
+        },
+        "eventName": {
+          "type": "string",
+          "description": "Name of the event."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the event."
+        }
+      },
+      "required": [
+        "id",
+        "eventName",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  Root for all user-owned data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/checkpoints/{checkpointId}",
+        "definition": {
+          "entityName": "Checkpoint",
+          "schema": {
+            "$ref": "#/backend/entities/Checkpoint"
+          },
+          "description": "Stores checkpoints for each user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "checkpointId",
+              "description": "The unique identifier of the checkpoint."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/leaderboards/{leaderboardId}",
+        "definition": {
+          "entityName": "Leaderboard",
+          "schema": {
+            "$ref": "#/backend/entities/Leaderboard"
+          },
+          "description": "Stores the definition of each leaderboard.",
+          "params": [
+            {
+              "name": "leaderboardId",
+              "description": "The unique identifier of the leaderboard."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/leaderboards/{leaderboardId}/entries/{entryId}",
+        "definition": {
+          "entityName": "LeaderboardEntry",
+          "schema": {
+            "$ref": "#/backend/entities/LeaderboardEntry"
+          },
+          "description": "Stores leaderboard entries for each leaderboard. Includes denormalized 'userId' for associating scores with users.",
+          "params": [
+            {
+              "name": "leaderboardId",
+              "description": "The unique identifier of the leaderboard."
+            },
+            {
+              "name": "entryId",
+              "description": "The unique identifier of the leaderboard entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "To support checkpoints and leaderboards in CyberNation, while adhering to Authorization Independence and QAPs, the Firestore structure is designed as follows:\n\n*   **Checkpoints:** Stored under `/users/{userId}/checkpoints/{checkpointId}`. This path-based ownership ensures that only the owning user can access their checkpoints. The `userId` is included within the checkpoint document itself (denormalized), enabling rules to validate ownership without needing to `get()` the parent user document.\n*   **Leaderboards:** Leaderboards are stored in the `/leaderboards/{leaderboardId}` collection. This allows for global management of leaderboards.\n*   **Leaderboard Entries:**  Each entry is stored in `/leaderboards/{leaderboardId}/entries/{entryId}`.  Each `LeaderboardEntry` includes the `userId`, enabling secure listing and filtering of entries by user.  Since listing leaderboard entries must be public, no denormalization is needed.  The structure facilitates queries for top scores within a specific leaderboard without requiring complex rules.\n\nThis design achieves Authorization Independence by denormalizing the `userId` into the `Checkpoint` and `LeaderboardEntry` documents, avoiding the need for `get()` calls to parent documents in security rules. It supports QAPs by segregating user-owned data (checkpoints) from global data (leaderboards) and using path-based ownership for checkpoints."
+  }
+}
