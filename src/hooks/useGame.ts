@@ -108,7 +108,14 @@ export const useGame = (user: User | null) => {
       if (docSnap.exists()) {
         const savedState = docSnap.data();
         
-        // Corrected & Hardened: Reconstruct the deck from IDs instead of storing the whole object.
+        // Corrected & Hardened: Add a guard clause to handle old save formats.
+        // If the 'deckIds' field doesn't exist, it's an old save, so we start a new game.
+        if (!savedState.deckIds) {
+            console.warn("Old save format detected. Starting a new game.");
+            startGame();
+            return;
+        }
+        
         const loadedDeck = savedState.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean);
         
         setResources(savedState.resources);
@@ -158,8 +165,6 @@ export const useGame = (user: User | null) => {
   }, [user, firestore]);
 
   useEffect(() => {
-    // Corrected & Hardened: Save a minimal, efficient payload instead of the entire state.
-    // The deck is now stored as an array of card IDs (`deckIds`).
     const saveState = {
       userId: user?.uid,
       resources,
@@ -170,7 +175,6 @@ export const useGame = (user: User | null) => {
       prescienceCharges,
       updatedAt: new Date().toISOString(),
     };
-    // Corrected & Hardened: Call the debounced save function.
     debouncedSave(saveState);
   }, [resources, deck, currentCardIndex, year, storyFlags, prescienceCharges, user, debouncedSave]);
 
@@ -331,8 +335,6 @@ export const useGame = (user: User | null) => {
     if (gameOverTrigger) {
       setGameOverMessage(message);
       if (user && firestore) {
-        // Corrected & Hardened: On game over, explicitly delete the checkpoint document.
-        // This is cleaner than adding a 'deletedAt' field and prevents stale data.
         const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
         deleteDoc(checkpointRef).catch(err => console.error("Failed to delete checkpoint:", err));
       }
@@ -379,5 +381,3 @@ export const useGame = (user: User | null) => {
     setStoryFlags,
   };
 };
-
-    
