@@ -23,6 +23,7 @@ export default function Game() {
   
   const [hasSave, setHasSave] = useState(false);
   const [isCheckingSave, setIsCheckingSave] = useState(true);
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
 
   const {
     resources,
@@ -42,8 +43,6 @@ export default function Game() {
     handleCreatorIntervention,
     returnToTitle,
     deleteSave,
-    tutorialCompleted, 
-    setTutorialCompleted
   } = useGame(user, hasSave, setHasSave);
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
@@ -71,7 +70,7 @@ export default function Game() {
     } finally {
       setIsCheckingSave(false);
     }
-  }, [user, firestore, setTutorialCompleted]);
+  }, [user, firestore]);
 
   useEffect(() => {
     checkSave();
@@ -185,5 +184,3 @@ export default function Game() {
     </div>
   );
 }
-
-    
