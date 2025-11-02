@@ -73,34 +73,42 @@ export const useGame = (user: User | null) => {
     if (!user || !firestore) return;
 
     const leaderboardEntryRef = doc(firestore, 'leaderboards', 'dynasty', 'entries', user.uid);
+    const profileRef = doc(firestore, 'users', user.uid);
 
     try {
-        const profileRef = doc(firestore, 'users', user.uid);
         const [profileSnap, entrySnap] = await Promise.all([
             getDoc(profileRef),
             getDoc(leaderboardEntryRef)
         ]);
 
-        if (profileSnap.exists()) {
-            const currentScore = entrySnap.exists() ? entrySnap.data().score : 0;
-            if (finalYear > currentScore) {
-                const username = profileSnap.data().username || 'Anonymous Ruler';
-                const scoreData = {
-                    userId: user.uid,
-                    username: username,
-                    score: finalYear,
-                    timestamp: serverTimestamp(),
-                };
-                setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
-            }
+        if (!profileSnap.exists()) {
+            console.error("User profile does not exist, cannot record score.");
+            return;
+        }
+
+        const currentScore = entrySnap.exists() ? entrySnap.data().score : 0;
+        
+        if (finalYear > currentScore) {
+            const username = profileSnap.data().username || 'Anonymous Ruler';
+            const scoreData = {
+                userId: user.uid,
+                username: username,
+                score: finalYear,
+                timestamp: serverTimestamp(),
+            };
+            // This will create the document if it doesn't exist, or overwrite it if it does.
+            // The security rule ensures the update only happens if the new score is higher.
+            setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (error) {
-        console.error("Failed to read user profile or existing score:", error);
+        // This is a generic catch block. The `setDocumentNonBlocking` has its
+        // own specific permission error handling that emits to the `errorEmitter`.
+        console.error("An error occurred while reading user profile or score:", error);
     }
-  }, [user, firestore]);
+}, [user, firestore]);
 
 
-  const startGame = useCallback((flags: StoryFlags = new Set()) => {
+  const startGame = useCallback((useFlags?: StoryFlags) => {
     setResources({
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
@@ -112,8 +120,10 @@ export const useGame = (user: User | null) => {
     const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
+    const flags = useFlags || storyFlags;
     const includeTutorial = !tutorialCompleted && !flags.has('creator_github_mercy');
     let initialDeck: CardData[] = [];
+
     if (includeTutorial && tutorialCard) {
       initialDeck = [tutorialCard, ...shuffledMainDeck];
     } else {
@@ -128,7 +138,7 @@ export const useGame = (user: User | null) => {
     setYear(1);
     setStoryFlags(flags);
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
-  }, [tutorialCompleted]);
+  }, [tutorialCompleted, storyFlags]);
 
   const deleteSave = useCallback(async () => {
     if (user && firestore) {
@@ -168,9 +178,11 @@ export const useGame = (user: User | null) => {
         setPrescienceCharges(savedState.prescienceCharges || 0);
         setTutorialCompleted(savedState.tutorialCompleted || false);
         setGameState("playing");
+        setHasSave(true); // Ensure save state is true on load
         setLastEffects({});
         setGameOverMessage("");
       } else {
+        setHasSave(false);
         startGame();
       }
     } catch (error) {
@@ -193,13 +205,9 @@ export const useGame = (user: User | null) => {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         const docSnap = await getDoc(checkpointRef);
-        if (docSnap.exists()) {
-          setHasSave(true);
-          setTutorialCompleted(docSnap.data().tutorialCompleted || false);
-        } else {
-          setHasSave(false);
-          setTutorialCompleted(false);
-        }
+        const saveExists = docSnap.exists();
+        setHasSave(saveExists);
+        setTutorialCompleted(saveExists ? docSnap.data().tutorialCompleted || false : false);
       } catch (error) {
         console.error("Error checking for save game:", error);
         setHasSave(false);
@@ -291,10 +299,12 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       setStoryFlags(newFlags);
-      setGameState("playing"); // Corrected: Don't restart, just return to the playing state.
+      // Don't restart, just return to the playing state.
+      // The user gets to replay the card that led to their demise.
+      setGameState("playing"); 
     } else {
       recordScore(year);
-      deleteSave(); // Corrected: Delete save on final game over.
+      deleteSave();
       setGameState("gameover");
     }
   }, [storyFlags, year, recordScore, deleteSave]);
@@ -328,7 +338,7 @@ export const useGame = (user: User | null) => {
     setResources(newResources);
 
     const nextYear = (currentCard.id !== 0 && currentCard.id !== 304) ? year + 1 : year;
-    setYear(nextYear);
+    
 
     if (currentCard.id === 0) {
       setTutorialCompleted(true);
@@ -385,7 +395,7 @@ export const useGame = (user: User | null) => {
     if (gameOverTrigger) {
       setGameOverMessage(message);
       recordScore(nextYear);
-      deleteSave(); // Corrected: Delete the save file when the game ends.
+      deleteSave();
 
       if (!storyFlags.has('creator_github_mercy')) {
         setGameState("creator_intervention");
@@ -397,10 +407,11 @@ export const useGame = (user: User | null) => {
        const nextCardIndex = getNextCard();
        if (nextCardIndex !== -1) {
          setCurrentCardIndex(nextCardIndex);
+         setYear(nextYear); // Only update year if the game continues
        } else {
          setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
          recordScore(nextYear);
-         deleteSave(); // Corrected: Delete save file on timeline completion.
+         deleteSave();
          setGameState("gameover");
        }
     }
@@ -408,6 +419,13 @@ export const useGame = (user: User | null) => {
 
   const returnToTitle = () => {
     setGameState("title");
+    // Explicitly check for save state again when returning to title
+    if (user && firestore) {
+      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+      getDoc(checkpointRef).then(docSnap => {
+        setHasSave(docSnap.exists());
+      });
+    }
   }
 
   return {
