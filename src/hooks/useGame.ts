@@ -9,8 +9,10 @@ import {
 } from '@/lib/game-data';
 import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
@@ -66,6 +68,35 @@ export const useGame = (user: User | null) => {
     }
   }, 1500), [user, firestore, gameState]);
 
+  const recordScore = useCallback(async (finalYear: number) => {
+    if (!user || !firestore) return;
+    try {
+        const profileRef = doc(firestore, 'users', user.uid);
+        const profileSnap = await getDoc(profileRef);
+
+        if (profileSnap.exists()) {
+            const username = profileSnap.data().username || 'Anonymous Ruler';
+            const leaderboardRef = collection(firestore, 'leaderboards', 'dynasty', 'entries');
+            const scoreData = {
+                userId: user.uid,
+                username: username,
+                score: finalYear,
+                timestamp: serverTimestamp(),
+            };
+            addDoc(leaderboardRef, scoreData).catch(serverError => {
+                 const permissionError = new FirestorePermissionError({
+                    path: leaderboardRef.path,
+                    operation: 'create',
+                    requestResourceData: scoreData,
+                 });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+        }
+    } catch (error) {
+        console.error("Failed to record score:", error);
+    }
+  }, [user, firestore]);
+
 
   const startGame = useCallback((flags: StoryFlags = new Set()) => {
     setResources({
@@ -106,15 +137,13 @@ export const useGame = (user: User | null) => {
       if (docSnap.exists()) {
         const savedState = docSnap.data();
         
-        // Corrected & Hardened: Check for existence of deckIds to handle legacy saves.
         if (!savedState.deckIds) {
             console.warn("Old save format detected. Starting a new game.");
-            startGame(); // Correctly call startGame without arguments
+            startGame();
             return;
         }
         
-        // Corrected & Hardened: Reconstruct the deck from IDs instead of storing the whole object.
-        const loadedDeck = savedState.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean);
+        const loadedDeck = savedState.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean) as CardData[];
         
         setResources(savedState.resources);
         setDeck(loadedDeck);
@@ -126,11 +155,11 @@ export const useGame = (user: User | null) => {
         setLastEffects({});
         setGameOverMessage("");
       } else {
-        startGame(); // Correctly call startGame without arguments
+        startGame();
       }
     } catch (error) {
         console.error("Error loading game:", error);
-        startGame(); // Correctly call startGame without arguments
+        startGame();
     } finally {
         setGameLoading(false);
     }
@@ -141,7 +170,7 @@ export const useGame = (user: User | null) => {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
-        setHasSave(false); // Corrected: Immediately update local state upon successful deletion.
+        setHasSave(false);
       } catch (err) {
         console.error("Failed to delete checkpoint:", err);
       }
@@ -172,13 +201,14 @@ export const useGame = (user: User | null) => {
       }
     };
     checkSave();
-  }, [user, firestore]); // Corrected: Removed gameState from dependency array to prevent re-triggering on game state changes.
+  }, [user, firestore]);
 
   useEffect(() => {
+    if (gameState !== 'playing') return;
     const saveState = {
       userId: user?.uid,
       resources,
-      deckIds: deck.map(card => card.id), // Corrected & Hardened: Save only card IDs.
+      deckIds: deck.map(card => card.id),
       currentCardIndex,
       year,
       storyFlags: storyFlagsToJSON(storyFlags),
@@ -186,7 +216,7 @@ export const useGame = (user: User | null) => {
       updatedAt: new Date().toISOString(),
     };
     debouncedSave(saveState);
-  }, [resources, deck, currentCardIndex, year, storyFlags, prescienceCharges, user, debouncedSave]);
+  }, [resources, deck, currentCardIndex, year, storyFlags, prescienceCharges, user, debouncedSave, gameState]);
 
 
   const getNextCard = useCallback(() => {
@@ -258,9 +288,10 @@ export const useGame = (user: User | null) => {
       }
 
     } else {
+      recordScore(year);
       setGameState("gameover");
     }
-  }, [storyFlags, startGame]);
+  }, [storyFlags, startGame, year, recordScore]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -290,14 +321,13 @@ export const useGame = (user: User | null) => {
     
     setResources(newResources);
 
-    if (currentCard.id !== 0 && currentCard.id !== 304) {
-      setYear(y => y + 1);
-    }
+    const nextYear = (currentCard.id !== 0 && currentCard.id !== 304) ? year + 1 : year;
+    setYear(nextYear);
     
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
-    } else if (year + 1 >= 50) {
+    } else if (nextYear >= 50) {
         const isBalanced = Object.values(newResources).every(v => v > 30 && v < 70);
         if (isBalanced) {
             gameOverTrigger = true;
@@ -344,6 +374,7 @@ export const useGame = (user: User | null) => {
 
     if (gameOverTrigger) {
       setGameOverMessage(message);
+      recordScore(nextYear);
       deleteSave();
 
       if (!storyFlags.has('creator_github_mercy')) {
@@ -358,10 +389,12 @@ export const useGame = (user: User | null) => {
          setCurrentCardIndex(nextCardIndex);
        } else {
          setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
+         recordScore(nextYear);
+         deleteSave();
          setGameState("gameover");
        }
     }
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave, recordScore]);
 
   const returnToTitle = () => {
     setGameState("title");
@@ -389,5 +422,3 @@ export const useGame = (user: User | null) => {
     deleteSave,
   };
 };
-
-    

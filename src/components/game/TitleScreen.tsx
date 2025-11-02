@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import SettingsDialog from "./SettingsDialog";
-import { Cog, LogOut, Trophy } from "lucide-react";
+import { Cog, LogOut, Trophy, Github, Linkedin } from "lucide-react";
 import { signInWithGoogle, signOutUser, signUpWithEmail, signInWithEmail } from "@/firebase/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,7 +77,6 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
           setUsernameModalOpen(true);
         }
       } else {
-        // Corrected: If profile doesn't exist, create it. This is a crucial fallback.
         const newProfileData: UserProfile = {
           id: user.uid,
           email: user.email || '',
@@ -243,6 +242,28 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
             </TooltipTrigger>
             <TooltipContent>
               <p>View the Legends of the Realm</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => window.open('https://github.com/harshrajsinhraulji/cyber-nation', '_blank')} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary">
+                  <Github className="w-6 h-6" />
+                  <span className="sr-only">GitHub</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View the source on GitHub</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => window.open('https://www.linkedin.com/in/harshrajsinhraulji/', '_blank')} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary">
+                  <Linkedin className="w-6 h-6" />
+                  <span className="sr-only">LinkedIn</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Connect with the creator</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
