@@ -18,7 +18,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-full w-full max-w-2xl animate-in fade-in-0 duration-500 overflow-hidden">
+    <div className="relative flex flex-col items-center justify-between h-full w-full max-w-2xl animate-in fade-in-0 duration-500 overflow-hidden p-6">
       
       {/* Background visual element */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -29,8 +29,10 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
         </div>
       </div>
 
+      {/* Spacer to push content down */}
+      <div />
 
-      <div className="z-10 flex flex-col items-center justify-center w-full h-full">
+      <div className="z-10 flex flex-col items-center justify-center w-full">
         <div className="flex flex-col items-center gap-2 mb-16 text-center">
           <h1 className="font-headline text-6xl text-primary tracking-wider">DRIFT</h1>
           <p className="font-body text-xl text-foreground/80">An Endless Present</p>
@@ -48,7 +50,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
         </div>
       </div>
       
-      <div className="absolute bottom-6 w-full flex justify-center items-center gap-6 z-10">
+      <div className="w-full flex justify-center items-center gap-6 z-10">
          <Button onClick={() => setIsSettingsOpen(true)} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary">
             <Cog className="w-6 h-6" />
             <span className="sr-only">Settings</span>
