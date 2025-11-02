@@ -4,26 +4,20 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for checkpoints,
- * allows authenticated users to create their own leaderboard entries,
+ * allows authenticated users to create or update their own leaderboard entries,
  * and allows public read access to leaderboards.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profiles, acting as the root for user-owned data.
  * - /users/{userId}/checkpoints/{checkpointId}: Stores checkpoints for each user.
  * - /leaderboards/{leaderboardId}: Stores the definition of each leaderboard.
- * - /leaderboards/{leaderboardId}/entries/{entryId}: Stores leaderboard entries for each leaderboard.
+ * - /leaderboards/{leaderboardId}/entries/{entryId}: Stores leaderboard entries for each leaderboard, where entryId is the userId.
  *
  * Key Security Decisions:
- * - Users can only create, read, update, and delete their own checkpoints and profiles.
- * - Authenticated users can create leaderboard entries for themselves.
+ * - Users can only manage their own profiles and checkpoints.
+ * - Authenticated users can create or update their own leaderboard entry if the new score is higher.
  * - Leaderboards and leaderboard entries are publicly readable.
- * - Write access to leaderboards and updates/deletes to entries are restricted.
  * - User listing is disallowed for privacy.
- *
- * Denormalization for Authorization:
- * The `userId` is denormalized into the `Checkpoint` and `LeaderboardEntry` documents. This allows for
- * authorization rules to validate ownership without needing to perform costly `get()` operations
- * on parent documents.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -32,11 +26,6 @@ service cloud.firestore {
     /**
      * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user can create their own profile.
-     * @allow (get, update, delete) - Authenticated user can only access their own profile.
-     * @deny (list) - Listing users is not allowed.
-     * @deny (create) - User cannot create another user's document.
-     * @principle Enforces document ownership and prevents user enumeration.
      */
     match /users/{userId} {
       function isOwner(userId) {
@@ -46,7 +35,6 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      // Corrected & Hardened: Ensure the ID field cannot be changed on update.
       allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isOwner(userId);
     }
@@ -54,36 +42,25 @@ service cloud.firestore {
     /**
      * @description Controls access to checkpoint documents within a user's profile.
      * @path /users/{userId}/checkpoints/{checkpointId}
-     * @allow (create) - Authenticated user can create a checkpoint under their profile.
-     * @allow (get, list, update, delete) - Authenticated user can only access checkpoints under their own profile.
-     * @deny (create) - User cannot create a checkpoint for another user.
-     * @principle Enforces document ownership and prevents cross-user data access.
      */
     match /users/{userId}/checkpoints/{checkpointId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
 
-      // Corrected: Combined owner checks into one function.
       function isDocumentOwner(doc) {
         return request.auth != null && request.auth.uid == doc.userId;
       }
 
       allow get, list: if isOwner(userId);
-      // Corrected: Validate ownership on the incoming data.
       allow create: if isOwner(userId) && isDocumentOwner(request.resource.data);
-      // Corrected: Validate ownership on existing and incoming data, prevent changing owner.
       allow update: if isOwner(userId) && isDocumentOwner(resource.data) && request.resource.data.userId == resource.data.userId;
-      // Corrected: On delete, check the ownership of the existing document.
-      allow delete: if isOwner(userId) && isDocumentOwner(resource.data);
+      allow delete: if isOwner(userId);
     }
 
     /**
      * @description Controls access to leaderboard documents.
      * @path /leaderboards/{leaderboardId}
-     * @allow (get, list) - Leaderboards are publicly readable.
-     * @deny (create, update, delete) - Leaderboard creation, modification, and deletion are not allowed.
-     * @principle Allows public read access to leaderboard definitions while restricting write access.
      */
     match /leaderboards/{leaderboardId} {
       allow get, list: if true;
@@ -91,18 +68,20 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to leaderboard entry documents within a leaderboard.
-     * @path /leaderboards/{leaderboardId}/entries/{entryId}
-     * @allow (get, list) - Leaderboard entries are publicly readable.
-     * @allow (create) - Authenticated user can create their own entry.
-     * @deny (update, delete) - Modifying/deleting entries is not allowed.
-     * @principle Allows public read access to scores and allows users to submit their own scores.
+     * @description Controls access to a user's leaderboard entry. The document ID must be the user's UID.
+     * @path /leaderboards/{leaderboardId}/entries/{userId}
      */
-    match /leaderboards/{leaderboardId}/entries/{entryId} {
+    match /leaderboards/{leaderboardId}/entries/{userId} {
       allow get, list: if true;
-      // Corrected: Allow authenticated users to create their own entries.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false; // Entries are immutable by default.
+
+      // Allow creating a new entry if the user is authenticated and the entry is for themselves.
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow updating if the user owns the document and the new score is higher than the old one.
+      allow update: if request.auth != null && request.auth.uid == userId 
+                      && request.resource.data.score > resource.data.score;
+                      
+      allow delete: if false; // Entries are immutable by default.
     }
   }
 }
