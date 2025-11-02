@@ -120,7 +120,7 @@ export default function Game() {
       await checkSave(); // Re-check save status when returning to title
   }
   
-  if (isUserLoading || isCheckingSave || (user && gameState !== 'title' && isGameLoading)) {
+  if (isUserLoading || isCheckingSave) {
     return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
@@ -136,6 +136,18 @@ export default function Game() {
     return <TitleScreen onStart={handleStart} onContinue={handleContinue} hasSave={hasSave} onDeleteSave={handleDelete} gameState={gameState} />;
   }
   
+  if (isGameLoading && gameState !== 'title') {
+     return (
+        <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
+            <div className="w-full h-10" />
+            <div className="flex h-[470px] w-full items-center justify-center rounded-lg bg-card/50">
+                <h1 className="font-headline text-2xl text-primary animate-pulse">LOADING REIGN...</h1>
+            </div>
+            <div className="h-8" />
+        </div>
+    );
+  }
+
   if (gameState === "creator_intervention" && creatorCard) {
     return (
        <div className="flex flex-col gap-6 items-center w-full max-w-2xl">

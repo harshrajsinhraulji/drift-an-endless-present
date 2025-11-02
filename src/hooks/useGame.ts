@@ -144,6 +144,7 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
 
 
   const startGame = useCallback((isTutorialCompleted: boolean, useFlags?: StoryFlags) => {
+    setGameLoading(true);
     setResources({
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
@@ -177,6 +178,8 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
     setCardsPerYear(getRandomInt(2,5));
     setStoryFlags(flags);
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
+    setTutorialCompleted(isTutorialCompleted);
+    setGameLoading(false);
   }, []);
 
   const deleteSave = useCallback(async () => {
