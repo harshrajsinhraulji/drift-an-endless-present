@@ -33,7 +33,7 @@ export default function Game({ user, isLoading }: GameProps) {
     storyFlags,
     prescienceCharges,
     isGameLoading,
-    startNewGame,
+    startNewGmae,
     loadGame,
     handleChoice,
     handleCreatorIntervention,
@@ -108,8 +108,8 @@ export default function Game({ user, isLoading }: GameProps) {
     );
   }
 
-  if (gameState === "title" || !user) {
-    return <TitleScreen onStart={startNewGame} onContinue={loadGame} hasSave={hasSave} />;
+  if (gameState === "title") {
+    return <TitleScreen onStart={startNewGmae} onContinue={loadGame} hasSave={hasSave} />;
   }
 
   if (gameState === "creator_intervention" && creatorCard) {

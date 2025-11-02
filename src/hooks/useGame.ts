@@ -82,22 +82,29 @@ export const useGame = (user: User | null) => {
 
   const loadGame = useCallback(async () => {
     if (!user || !firestore) return;
+    setGameLoading(true);
     const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-    const docSnap = await getDoc(checkpointRef);
-
-    if (docSnap.exists()) {
-      const savedState = docSnap.data();
-      setResources(savedState.resources);
-      setDeck(savedState.deck);
-      setCurrentCardIndex(savedState.currentCardIndex);
-      setYear(savedState.year);
-      setStoryFlags(storyFlagsFromJSON(savedState.storyFlags || []));
-      setPrescienceCharges(savedState.prescienceCharges || 0);
-      setGameState("playing");
-      setLastEffects({});
-      setGameOverMessage("");
-    } else {
-      startNewGame();
+    try {
+      const docSnap = await getDoc(checkpointRef);
+      if (docSnap.exists()) {
+        const savedState = docSnap.data();
+        setResources(savedState.resources);
+        setDeck(savedState.deck);
+        setCurrentCardIndex(savedState.currentCardIndex);
+        setYear(savedState.year);
+        setStoryFlags(storyFlagsFromJSON(savedState.storyFlags || []));
+        setPrescienceCharges(savedState.prescienceCharges || 0);
+        setGameState("playing");
+        setLastEffects({});
+        setGameOverMessage("");
+      } else {
+        startNewGame();
+      }
+    } catch (error) {
+        console.error("Error loading game:", error);
+        startNewGame(); // Start new game on error
+    } finally {
+        setGameLoading(false);
     }
   }, [user, firestore, startNewGame]);
 
@@ -112,23 +119,25 @@ export const useGame = (user: User | null) => {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         const docSnap = await getDoc(checkpointRef);
-        const savedGameExists = docSnap.exists();
-        setHasSave(savedGameExists);
-        if (savedGameExists) {
-            await loadGame();
-        } else {
-            // This is a new user or a user without a save. Go to title screen to let them start.
-            setGameState('title');
-        }
+        setHasSave(docSnap.exists());
       } catch (error) {
         console.error("Error checking for save game:", error);
-        setGameState('title'); // Fallback to title on error
+        setHasSave(false);
       } finally {
         setGameLoading(false);
+        // After checking for a save, go to title screen.
+        // The user will then choose to "Continue" or "Start New".
+        setGameState('title');
       }
     };
-    checkSave();
-  }, [user, firestore, loadGame]);
+
+    if (user) {
+      checkSave();
+    } else {
+      setGameState('title');
+      setGameLoading(false);
+    }
+  }, [user, firestore]);
 
   useEffect(() => {
     if (user && firestore && gameState === "playing") {

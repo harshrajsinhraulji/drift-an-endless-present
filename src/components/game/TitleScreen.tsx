@@ -61,58 +61,14 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
             <p className="font-body text-xl text-foreground/80">An Endless Present</p>
           </div>
           
-           <Tabs defaultValue="signin" className="w-[400px]">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
-            <TabsContent value="signin">
-              <Card>
-                <CardHeader>
-                   <CardTitle>Welcome Back</CardTitle>
-                   <CardDescription>Sign in to continue your journey.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input id="signin-email" type="email" placeholder="pharaoh@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input id="signin-password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-                  </div>
-                   {error && <p className="text-sm text-destructive">{error}</p>}
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                  <Button className="w-full" onClick={handleEmailSignIn}>Sign In</Button>
-                  <Button variant="outline" className="w-full" onClick={signInWithGoogle}>Sign In with Google</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="register">
-               <Card>
-                <CardHeader>
-                   <CardTitle>Begin Your Reign</CardTitle>
-                   <CardDescription>Create an account to save your progress.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <Input id="register-email" type="email" placeholder="pharaoh@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
-                    <Input id="register-password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-                  </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                  <Button className="w-full" onClick={handleEmailSignUp}>Register with Email</Button>
-                   <Button variant="outline" className="w-full" onClick={signInWithGoogle}>Sign Up with Google</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
+           <div className="flex flex-col gap-4 w-full max-w-xs">
+            {hasSave && (
+              <Button onClick={onContinue} className="w-full font-headline text-xl" size="lg">Continue</Button>
+            )}
+             <Button onClick={onStart} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
+              New Game
+            </Button>
+          </div>
 
       </div>
       
