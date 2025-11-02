@@ -96,16 +96,12 @@ export const useGame = (user: User | null) => {
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
+            // Use setDocumentNonBlocking to handle this write operation
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (error) {
         console.error("An error occurred while reading user profile or score:", error);
-        const permissionError = new FirestorePermissionError({
-            path: leaderboardEntryRef.path,
-            operation: 'write',
-            requestResourceData: { score: finalYear }
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        // Let the non-blocking update handler manage permission errors.
     }
 }, [user, firestore]);
 
@@ -118,17 +114,19 @@ export const useGame = (user: User | null) => {
       money: INITIAL_RESOURCE_VALUE,
     });
     
-    const tutorialCard = gameCards.find(c => c.id === 0);
-    const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
+    // Tutorial cards are now IDs 0, 1, 2
+    const tutorialCards = gameCards.filter(c => c.id >= 0 && c.id <= 2).sort((a,b) => a.id - b.id);
+    const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
     const flags = useFlags || new Set(storyFlags);
+    // Tutorial is skipped if completed OR if the mercy flag is set (which implies a reload)
     const includeTutorial = !tutorialCompleted && !flags.has('creator_github_mercy');
     
     let initialDeck: CardData[] = [];
 
-    if (includeTutorial && tutorialCard) {
-      initialDeck = [tutorialCard, ...shuffledMainDeck];
+    if (includeTutorial) {
+      initialDeck = [...tutorialCards, ...shuffledMainDeck];
     } else {
       initialDeck = shuffledMainDeck;
     }
@@ -281,7 +279,7 @@ export const useGame = (user: User | null) => {
             !c.isSpecial && 
             !c.requiredFlags && 
             seenStandardCardIds.has(c.id) &&
-            c.id !== 0
+            !(c.id >= 0 && c.id <= 2) // Don't reshuffle tutorial cards
         );
 
         const newShuffledCards = shuffleArray(reshuffleableCards);
@@ -302,6 +300,7 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       setStoryFlags(newFlags);
+      // Don't reset the game, just return to the playing state
       setGameState("playing"); 
     } else {
       recordScore(year);
@@ -338,10 +337,11 @@ export const useGame = (user: User | null) => {
     
     setResources(newResources);
 
-    const nextYear = (currentCard.id !== 0 && currentCard.id !== 304) ? year + 1 : year;
+    const isTutorialCard = currentCard.id >= 0 && currentCard.id <= 2;
+    const nextYear = !isTutorialCard ? year + 1 : year;
     
 
-    if (currentCard.id === 0) {
+    if (currentCard.id === 2) { // Last card of the new tutorial
       setTutorialCompleted(true);
     }
     
@@ -420,13 +420,8 @@ export const useGame = (user: User | null) => {
 
   const returnToTitle = async () => {
     setGameState("title");
-    if (user && firestore) {
-      // Re-check for a save file. This is important after a game over,
-      // where deleteSave() was called. We wait for it to complete.
-      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-      const docSnap = await getDoc(checkpointRef);
-      setHasSave(docSnap.exists());
-    }
+    await deleteSave(); // Ensure save is deleted before returning to title
+    setHasSave(false);
   }
 
   return {

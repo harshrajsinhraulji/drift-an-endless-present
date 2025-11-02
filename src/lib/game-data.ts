@@ -66,24 +66,40 @@ export const getCardText = (card: CardData, resources: Record<ResourceId, number
 };
 
 export const gameCards: CardData[] = [
+  // --- NEW TUTORIAL SEQUENCE ---
   {
     id: 0,
-    character: "The Advisor",
-    icon: "Scroll",
-    text: "You are the ruler. The kingdom awaits. Swipe left or right with your thumb to make your first decree.",
+    character: "Ahmose the Dancer",
+    icon: "PersonStanding",
+    text: "Pharaoh? My Pharaoh? Are you feeling alright? You seem... distant.",
     choices: [
-        {
-            text: "I understand",
-            effects: {},
-        },
-        {
-            text: "I understand",
-            effects: {},
-        },
+      { text: "What...?", effects: { people: -5 } },
+      { text: "Where am I?", effects: { people: -5 } },
     ]
   },
   {
     id: 1,
+    character: "The Advisor",
+    icon: "Scroll",
+    text: "Pharaoh, forgive my intrusion, but your silence worries us. The four pillars of the kingdom... the land, the people, the army, the treasury... they require your guidance.",
+    choices: [
+        { text: "The... pillars?", effects: {} },
+        { text: "My guidance?", effects: {} },
+    ]
+  },
+  {
+    id: 2,
+    character: "The Advisor",
+    icon: "Landmark",
+    text: "Every choice you make will strengthen or weaken these pillars. Swipe left or right to issue your decree. The fate of the kingdom rests on your judgment.",
+    choices: [
+      { text: "I will try to remember.", effects: { people: 5 } },
+      { text: "I understand.", effects: { army: 5 } },
+    ]
+  },
+  // --- END TUTORIAL ---
+  {
+    id: 3,
     character: "The Advisor",
     icon: "Landmark",
     text: "Pharaoh, the great river overflows. Should we invest in strengthening the dams or conserve our resources and let it flood?",
@@ -99,7 +115,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 2,
+    id: 4,
     character: "High Priest",
     icon: "Pyramid",
     text: "A strange celestial body hangs in the sky. The people are frightened. Should we hold a grand ceremony to appease the gods, or consult the astronomers?",
@@ -117,7 +133,7 @@ export const gameCards: CardData[] = [
     blockedByFlags: ["met_astronomer"],
   },
   {
-    id: 3,
+    id: 5,
     character: "General",
     icon: "Swords",
     text: "The northern tribes are restless. A show of force will keep them in line, but it may provoke a larger conflict.",
@@ -133,7 +149,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 4,
+    id: 6,
     character: "Treasurer",
     icon: "Coins",
     text: "The royal granaries are overflowing. We can sell the surplus for a great profit, or distribute it to the people to ensure their loyalty.",
@@ -148,8 +164,8 @@ export const gameCards: CardData[] = [
       },
     ],
   },
-    {
-    id: 6,
+  {
+    id: 7,
     character: "Chief Architect",
     icon: "DraftingCompass",
     text: "Great Pharaoh, we can build a grand monument to your glory. It will be a marvel, but will require immense resources.",
@@ -165,7 +181,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 7,
+    id: 8,
     character: "Foreign Emissary",
     icon: "Handshake",
     text: "My kingdom offers a trade alliance. It will bring wealth, but also make us dependent on foreign goods.",
@@ -181,7 +197,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 8,
+    id: 9,
     character: "Head Farmer",
     icon: "Wheat",
     text: "A plague of locusts threatens the crops. We need soldiers to help, but it will leave our borders vulnerable.",
@@ -197,7 +213,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 9,
+    id: 10,
     character: "General",
     icon: "Swords",
     text: [
@@ -229,7 +245,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 10,
+    id: 11,
     character: "High Priest",
     icon: "Pyramid",
     text: "The people grow restless with our old traditions. A new festival could unite them, or it could be seen as heresy.",
@@ -245,7 +261,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 11,
+    id: 12,
     character: "Lead Astronomer",
     icon: "Sparkles",
     text: "You summoned me, Pharaoh. The celestial body is no star. It is a vessel. It is waiting.",
@@ -263,7 +279,7 @@ export const gameCards: CardData[] = [
     blockedByFlags: ["studied_star"],
   },
     {
-    id: 12,
+    id: 13,
     character: "Cult Leader",
     icon: "Torah",
     text: "The people flock to my teachings, seeking solace. Embrace our movement, and they will be yours. Suppress us, and risk their wrath.",
@@ -279,7 +295,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 13,
+    id: 14,
     character: "Chief Alchemist",
     icon: "Beaker",
     text: "Pharaoh, my guild is on the verge of a breakthrough: turning lead into gold! We require a significant investment to complete our Great Work.",
@@ -295,7 +311,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 14,
+    id: 15,
     character: "General",
     icon: "Swords",
     text: "Bandits are raiding caravans on the spice road. We can send a detachment, but it will thin our defenses.",
@@ -311,7 +327,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 15,
+    id: 16,
     character: "Scribe",
     icon: "Scroll",
     text: "I have found an ancient map in the library. It supposedly leads to a hidden oasis, a source of great vitality for the land.",
@@ -327,7 +343,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 16,
+    id: 17,
     character: "Philosopher",
     icon: "BrainCircuit",
     text: "I have been teaching the youth to question everything, even your divine right to rule. This new way of thinking could lead to innovation or chaos.",
@@ -343,7 +359,7 @@ export const gameCards: CardData[] = [
     ],
   },
   {
-    id: 17,
+    id: 18,
     character: "Merchant Captain",
     icon: "Ship",
     text: "A ship from a distant, plagued land requests to dock. Their cargo is valuable, but they carry risk.",
@@ -361,7 +377,7 @@ export const gameCards: CardData[] = [
     blockedByFlags: ["plague_started"]
   },
   {
-    id: 18,
+    id: 19,
     character: "Plague Doctor",
     icon: "Pipette",
     text: "The sickness spreads. I can devise a cure, but it requires a rare, toxic flower that will poison the rivers.",
@@ -380,7 +396,7 @@ export const gameCards: CardData[] = [
     blockedByFlags: ["plague_cured_by_sacrifice", "plague_cured_by_isolation"]
   },
   {
-    id: 19,
+    id: 20,
     character: "Quarantine Guard",
     icon: "ShieldAlert",
     text: "To stop the plague, we must lock the sick in their homes. It is brutal, but it will work.",
@@ -399,7 +415,7 @@ export const gameCards: CardData[] = [
     blockedByFlags: ["plague_cured_by_sacrifice", "plague_cured_by_isolation"]
   },
   {
-    id: 20,
+    id: 21,
     character: "Royal Spy",
     icon: "EyeOff",
     text: "I have uncovered a plot against you within the court. We can expose the traitors publicly or... arrange for them to disappear.",
@@ -411,6 +427,103 @@ export const gameCards: CardData[] = [
       {
         text: "Make them disappear.",
         effects: { people: -10, army: 10 },
+      },
+    ],
+  },
+  // --- NEW REGULAR CARDS ---
+  {
+    id: 22,
+    character: "Dune Scavenger",
+    icon: "Wind",
+    text: "I found this strange metal relic in the deep desert. It hums with an inner light. The priests say it's cursed.",
+    choices: [
+      {
+        text: "Bring it to the Alchemists.",
+        effects: { money: 15, environment: -5 },
+      },
+      {
+        text: "Heed the priests. Destroy it.",
+        effects: { people: 10, army: -5 },
+      },
+    ],
+  },
+  {
+    id: 23,
+    character: "Master of Canals",
+    icon: "Droplets",
+    text: "We could divert the Great River through new canals to create more farmland. It is a massive undertaking.",
+    choices: [
+      {
+        text: "Begin the great work.",
+        effects: { environment: 20, money: -20, people: 10 },
+      },
+      {
+        text: "The river's path is sacred.",
+        effects: { environment: -5 },
+      },
+    ],
+  },
+  {
+    id: 24,
+    character: "Celestial Cartographer",
+    icon: "MilkyWay",
+    text: "The star charts of the ancients are more advanced than our own. They speak of worlds beyond our sky. Should we fund an observatory to seek them?",
+    choices: [
+      {
+        text: "Scan the heavens.",
+        effects: { money: -15, army: 10 },
+      },
+      {
+        text: "Focus on our own world.",
+        effects: { people: 5 },
+      },
+    ],
+  },
+  {
+    id: 25,
+    character: "Nomad Chieftain",
+    icon: "Users",
+    text: "Your expansion encroaches on our ancestral grazing lands. Allow us to live as we always have, or we will be forced to fight for them.",
+    choices: [
+      {
+        text: "Grant them autonomy.",
+        effects: { people: 10, army: -5, environment: 5 },
+      },
+      {
+        text: "The land belongs to the kingdom.",
+        effects: { army: 10, environment: -10 },
+      },
+    ],
+  },
+  {
+    id: 26,
+    character: "Mine Foreman",
+    icon: "Hammer",
+    text: "We've struck a vein of a strange, glowing mineral. It's highly unstable but could be a powerful new weapon or energy source.",
+    choices: [
+      {
+        text: "Weaponize it.",
+        effects: { army: 25, environment: -15 },
+      },
+      {
+        text: "Study it for energy.",
+        effects: { money: 20, environment: -10 },
+      },
+    ],
+  },
+  {
+    id: 27,
+    character: "Keeper of the Archives",
+    icon: "Library",
+    text: "Ancient scrolls depict a 'Great Silence' that befell our ancestors. They say it was a punishment. Should we publicize this knowledge?",
+    choices: [
+      {
+        text: "The people deserve to know.",
+        effects: { people: -15, money: 5 },
+      },
+      {
+        text: "Some history is best forgotten.",
+        effects: { people: 10, army: -5 },
       },
     ],
   },
