@@ -21,6 +21,7 @@ export const SmokeBackground = ({
       <div
         className={cn(
           "absolute inset-0 z-0 h-full w-full animate-smoke-in bg-[radial-gradient(ellipse_100%_40%_at_50%_60%,hsl(var(--primary)/0.08),transparent)]",
+          "animate-smoke-move",
           className
         )}
       />

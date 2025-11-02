@@ -107,6 +107,17 @@ export default {
             transform: "translateY(0px)",
           },
         },
+        "smoke-move": {
+          "0%": {
+            "background-position": "0% 0%",
+          },
+          "50%": {
+            "background-position": "100% 100%",
+          },
+          "100%": {
+            "background-position": "0% 0%",
+          }
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -114,6 +125,7 @@ export default {
         'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin-slow 45s linear infinite',
         "smoke-in": "smoke-in 1s ease-out forwards",
+        "smoke-move": "smoke-move 120s ease-in-out infinite",
       },
     },
   },
