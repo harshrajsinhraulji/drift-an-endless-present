@@ -96,14 +96,16 @@ export const useGame = (user: User | null) => {
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
-            // This will create the document if it doesn't exist, or overwrite it if it does.
-            // The security rule ensures the update only happens if the new score is higher.
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (error) {
-        // This is a generic catch block. The `setDocumentNonBlocking` has its
-        // own specific permission error handling that emits to the `errorEmitter`.
         console.error("An error occurred while reading user profile or score:", error);
+        const permissionError = new FirestorePermissionError({
+            path: leaderboardEntryRef.path,
+            operation: 'write',
+            requestResourceData: { score: finalYear }
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
 }, [user, firestore]);
 
@@ -120,8 +122,9 @@ export const useGame = (user: User | null) => {
     const regularCards = gameCards.filter(c => c.id !== 0 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
-    const flags = useFlags || storyFlags;
+    const flags = useFlags || new Set(storyFlags);
     const includeTutorial = !tutorialCompleted && !flags.has('creator_github_mercy');
+    
     let initialDeck: CardData[] = [];
 
     if (includeTutorial && tutorialCard) {
@@ -299,8 +302,6 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       setStoryFlags(newFlags);
-      // Don't restart, just return to the playing state.
-      // The user gets to replay the card that led to their demise.
       setGameState("playing"); 
     } else {
       recordScore(year);
@@ -417,14 +418,14 @@ export const useGame = (user: User | null) => {
     }
   }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave, recordScore]);
 
-  const returnToTitle = () => {
+  const returnToTitle = async () => {
     setGameState("title");
-    // Explicitly check for save state again when returning to title
     if (user && firestore) {
+      // Re-check for a save file. This is important after a game over,
+      // where deleteSave() was called. We wait for it to complete.
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-      getDoc(checkpointRef).then(docSnap => {
-        setHasSave(docSnap.exists());
-      });
+      const docSnap = await getDoc(checkpointRef);
+      setHasSave(docSnap.exists());
     }
   }
 

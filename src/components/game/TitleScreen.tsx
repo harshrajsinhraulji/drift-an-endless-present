@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { User } from "firebase/auth";
 import { useFirestore, useUser } from "@/firebase";
-import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import LeaderboardsDialog from "./LeaderboardsDialog";
 
 interface TitleScreenProps {
@@ -165,9 +165,11 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
             
             {user && userProfile ? (
               <div className="flex flex-col items-center gap-6">
-                <Button onClick={onContinue} size="lg" className="w-64 font-headline text-xl" disabled={!hasSave}>
-                  Continue Your Reign
-                </Button>
+                {hasSave && (
+                    <Button onClick={onContinue} size="lg" className="w-64 font-headline text-xl">
+                        Continue Your Reign
+                    </Button>
+                )}
                 <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-64 font-headline text-xl">
                   Begin a New Reign
                 </Button>
