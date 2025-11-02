@@ -207,11 +207,15 @@ export const gameCards: CardData[] = [
       },
       {
         text: "My soldiers' morale is low. A pay rise would boost their spirits, but the treasury is already strained.",
+        lowResource: "army"
       },
        {
         text: "Pharaoh, my soldiers starve. They cannot fight on glory alone. We must find the funds to pay them, or they will desert.",
         lowResource: "money"
       },
+      {
+        text: "The army's morale is adequate, Pharaoh. We can maintain their loyalty without additional expense for now.",
+      }
     ],
     choices: [
       {
@@ -570,3 +574,5 @@ export const storyFlagDescriptions: Record<StoryFlag, string> = {
   plague_cured_by_isolation: "You contained the plague with brutal quarantine measures, at great cost to your people.",
   creator_mercy_acknowledged: "You have acknowledged the Creator's intervention."
 }
+
+    
