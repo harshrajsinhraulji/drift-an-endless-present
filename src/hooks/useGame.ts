@@ -60,6 +60,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
   const [prescienceCharges, setPrescienceCharges] = useState(0);
   const [isGameLoading, setGameLoading] = useState(false);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
+  const [gameOverCause, setGameOverCause] = useState<ResourceId | 'star' | null>(null);
   
   const [cardsPerYear, setCardsPerYear] = useState(getRandomInt(2, 5));
   const [cardInYearCount, setCardInYearCount] = useState(0);
@@ -171,6 +172,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     setCurrentCardIndex(0);
     setGameState("playing");
     setGameOverMessage("");
+    setGameOverCause(null);
     setLastEffects({});
     setYear(0);
     setCardInYearCount(0);
@@ -197,6 +199,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     setGameState("playing");
     setLastEffects({});
     setGameOverMessage("");
+    setGameOverCause(null);
     setGameLoading(false);
   }, []);
 
@@ -283,20 +286,20 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
         army: getRandomInt(25, 45),
         money: getRandomInt(25, 45),
       };
-      setResources(weakenedResources);
       
-      awardAchievements(['creator_mercy']);
-
       const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
       const shuffledMainDeck = shuffleArray(regularCards);
       const mercyCard = gameCards.find(c => c.id === 304);
       let newDeck = mercyCard ? [mercyCard, ...shuffledMainDeck] : shuffledMainDeck;
-      
+
+      setResources(weakenedResources);
       setDeck(newDeck);
       setCurrentCardIndex(0);
       setStoryFlags(newFlags);
       setGameState("playing");
       setLastEffects({});
+      setGameOverCause(null);
+      awardAchievements(['creator_mercy']);
 
     } else {
       recordScore(year);
@@ -325,6 +328,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     let gameOverTrigger = false;
     let message = "";
     let endFlag: AchievementId | null = null;
+    let cause: ResourceId | 'star' | null = null;
     let achievementsToAward: AchievementId[] = [];
 
     for (const [resource, effect] of Object.entries(choice.effects)) {
@@ -361,12 +365,14 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
         endFlag = 'cosmic_merger';
+        cause = 'star';
     } else if (nextYear >= 50) {
         const isBalanced = Object.values(newResources).every(v => v > 30 && v < 70);
         if (isBalanced) {
             gameOverTrigger = true;
             message = gameOverConditions.golden_age;
             endFlag = 'golden_age';
+            cause = 'star';
         }
     }
     
@@ -377,12 +383,14 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
                 gameOverTrigger = true;
                 message = gameOverConditions[`${resourceId}_low`];
                 endFlag = `${resourceId}_low` as AchievementId;
+                cause = resourceId;
                 break;
             }
             if (newResources[resourceId] >= 100) {
                 gameOverTrigger = true;
                 message = gameOverConditions[`${resourceId}_high`];
                 endFlag = `${resourceId}_high` as AchievementId;
+                cause = resourceId;
                 break;
             }
         }
@@ -414,6 +422,15 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
         }
     }
     
+    if (Math.random() < 0.05 && !storyFlags.has('creator_github_mercy')) {
+        const githubCard = gameCards.find(card => card.id === 302);
+        if(githubCard) {
+             const newDeck = [...deck];
+            newDeck.splice(currentCardIndex + 1, 0, githubCard);
+            setDeck(newDeck);
+        }
+    }
+    
     if (Math.random() < 0.05 && !storyFlags.has('creator_linkedin_prescience')) {
         const prescienceCard = gameCards.find(card => card.id === 303);
         if(prescienceCard) {
@@ -435,6 +452,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
       const wasMercyUsed = storyFlags.has('creator_github_mercy');
       
       setGameOverMessage(message);
+      setGameOverCause(cause);
       setYear(nextYear);
       setCardInYearCount(nextCardInYearCount);
       deleteCheckpoint();
@@ -456,6 +474,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
       setCurrentCardIndex(nextCardIndex);
     } else {
       setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
+      setGameOverCause('star');
       recordScore(nextYear);
       deleteCheckpoint();
       setGameState("gameover");
@@ -473,8 +492,8 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     deck,
     currentCardIndex,
     gameState,
-    setGameState,
     gameOverMessage,
+    gameOverCause,
     lastEffects,
     year,
     storyFlags,
@@ -486,6 +505,5 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     handleCreatorIntervention,
     returnToTitle,
     tutorialCompleted,
-    setTutorialCompleted,
   };
 };

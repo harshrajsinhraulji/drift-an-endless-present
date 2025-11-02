@@ -38,6 +38,7 @@ export default function Game() {
     storyFlags,
     prescienceCharges,
     isGameLoading,
+    gameOverCause,
     startGame,
     loadGame,
     handleChoice,
@@ -49,36 +50,42 @@ export default function Game() {
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const { bgmVolume } = useContext(SoundContext);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const endAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (!user) {
-        setIsCheckingSave(false);
-        return;
+    if (!bgmAudioRef.current) {
+      bgmAudioRef.current = new Audio('/assets/sounds/bgm.mp3');
+      bgmAudioRef.current.loop = true;
+      bgmAudioRef.current.addEventListener('error', () => {
+        if(bgmAudioRef.current) bgmAudioRef.current.src = ""; // Prevent further load attempts
+      });
     }
-    // Let useCheckpoint handle the check
-  }, [user]);
-  
-  useEffect(() => {
-     if (!audioRef.current) {
-      audioRef.current = new Audio('/assets/sounds/bgm.mp3');
-      audioRef.current.loop = true;
-      audioRef.current.addEventListener('error', () => {
-        if(audioRef.current) audioRef.current.src = ""; // Prevent further load attempts
+     if (!endAudioRef.current) {
+      endAudioRef.current = new Audio('/assets/sounds/end.mp3');
+      endAudioRef.current.addEventListener('error', () => {
+        if(endAudioRef.current) endAudioRef.current.src = ""; // Prevent further load attempts
       });
     }
   }, []);
   
   useEffect(() => {
-    if (audioRef.current && audioRef.current.src) {
+    if (bgmAudioRef.current && bgmAudioRef.current.src) {
       const shouldPlayBGM = (gameState === 'playing' || gameState === 'title' || gameState === 'creator_intervention') && bgmVolume > 0;
       if (shouldPlayBGM) {
-        audioRef.current.volume = bgmVolume;
-        audioRef.current.play().catch(e => {});
+        bgmAudioRef.current.volume = bgmVolume;
+        bgmAudioRef.current.play().catch(e => {});
       } else {
-        audioRef.current.pause();
+        bgmAudioRef.current.pause();
       }
     }
+    
+    if (endAudioRef.current && endAudioRef.current.src && gameState === 'gameover') {
+        if (bgmAudioRef.current) bgmAudioRef.current.pause();
+        endAudioRef.current.volume = bgmVolume; // Use BGM volume for ending cinematic
+        endAudioRef.current.play().catch(e => {});
+    }
+
   }, [gameState, bgmVolume]);
 
   const currentCard = deck[currentCardIndex];
@@ -116,7 +123,7 @@ export default function Game() {
     return <TitleScreen onStart={handleStart} onContinue={handleContinue} hasSave={hasSave} onDeleteSave={handleDelete} gameState={gameState} />;
   }
   
-  if (isGameLoading && gameState !== 'title') {
+  if (isGameLoading) {
      return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
@@ -132,7 +139,7 @@ export default function Game() {
     return (
        <div className="flex flex-col gap-6 items-center w-full max-w-2xl">
         <div className="w-full mx-auto flex flex-col gap-6 z-10">
-          <ResourceDisplay resources={resources} effects={{}} />
+          <ResourceDisplay resources={resources} effects={{}} gameOverCause={null} />
           <NarrativeCard
             key={creatorCard.id}
             card={{ ...creatorCard, text: getCardText(creatorCard, resources)}}
@@ -147,9 +154,9 @@ export default function Game() {
 
   return (
     <div className="flex flex-col gap-6 items-center w-full max-w-2xl">
-      <div className={cn("w-full mx-auto flex flex-col gap-6 z-10 transition-opacity duration-500", gameState === 'gameover' ? "opacity-30" : "opacity-100")}>
-        <ResourceDisplay resources={resources} effects={lastEffects} />
-        {currentCard && (
+      <div className={cn("w-full mx-auto flex flex-col gap-6 z-10 transition-all duration-1000", gameState === 'gameover' ? "opacity-30 blur-sm" : "opacity-100")}>
+        <ResourceDisplay resources={resources} effects={lastEffects} gameOverCause={gameOverCause}/>
+        {currentCard && gameState === 'playing' && (
             <NarrativeCard
               key={currentCard.id}
               card={{ ...currentCard, text: cardText}}
@@ -160,7 +167,13 @@ export default function Game() {
         )}
       </div>
       <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || (currentCard?.id === 0 || currentCard?.id === 304) ? 0 : 1}}>Year {year}</p>
-      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} year={year} />
+      <GameOverDialog 
+        isOpen={gameState === "gameover"} 
+        message={gameOverMessage} 
+        onRestart={returnToTitle} 
+        year={year} 
+        cause={gameOverCause} 
+       />
        <div className="absolute bottom-4 right-4 flex items-center gap-4">
             {prescienceCharges > 0 && (
                 <div className="flex items-center gap-2 text-primary/80 animate-pulse">

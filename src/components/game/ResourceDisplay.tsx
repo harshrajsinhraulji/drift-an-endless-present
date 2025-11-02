@@ -11,6 +11,7 @@ type Resources = Record<ResourceId, number>;
 interface ResourceDisplayProps {
   resources: Resources;
   effects: Partial<Record<ResourceId, number>>;
+  gameOverCause: ResourceId | 'star' | null;
 }
 
 const resourceIcons: Record<ResourceId, React.ElementType> = {
@@ -43,7 +44,7 @@ const EffectIndicator = ({ effect }: { effect: number }) => {
   );
 };
 
-export default function ResourceDisplay({ resources, effects }: ResourceDisplayProps) {
+export default function ResourceDisplay({ resources, effects, gameOverCause }: ResourceDisplayProps) {
   const [currentEffects, setCurrentEffects] = useState<Partial<Record<ResourceId, number>>>({});
 
   useEffect(() => {
@@ -65,24 +66,27 @@ export default function ResourceDisplay({ resources, effects }: ResourceDisplayP
         const effect = currentEffects[id];
         const isLow = value <= 20;
         const isHigh = value >= 80;
+        const isGameOverCause = gameOverCause === id;
 
         return (
-          <div key={id} className="relative flex flex-col items-center gap-2">
+          <div key={id} className={cn("relative flex flex-col items-center gap-2 transition-all duration-500", isGameOverCause ? "scale-125" : "")}>
             {effect && <EffectIndicator effect={effect} />}
             <Icon className={cn(
-                "w-7 h-7 text-primary",
+                "w-7 h-7 text-primary transition-all duration-300",
                 isLow && "animate-pulse text-destructive",
-                isHigh && "animate-pulse text-yellow-400"
+                isHigh && "animate-pulse text-yellow-400",
+                isGameOverCause && "text-destructive animate-pulse scale-150"
             )} aria-label={`${id} icon`} />
             <div className="flex flex-col-reverse gap-1">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full",
+                    "w-1.5 h-1.5 rounded-full transition-colors duration-300",
                     i < dotCount ? "bg-primary" : "bg-muted",
                      isLow && i < dotCount && "bg-destructive",
-                     isHigh && i < dotCount && "bg-yellow-400"
+                     isHigh && i < dotCount && "bg-yellow-400",
+                     isGameOverCause && "bg-destructive"
                   )}
                 />
               ))}

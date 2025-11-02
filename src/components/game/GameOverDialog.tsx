@@ -29,25 +29,15 @@ interface GameOverDialogProps {
   message: string;
   onRestart: () => void;
   year: number;
+  cause: ResourceId | 'star' | null;
 }
 
-export default function GameOverDialog({ isOpen, message, onRestart, year }: GameOverDialogProps) {
-  let iconId: ResourceId | 'star' | null = null;
-  if (message.includes("land has withered")) iconId = "environment";
-  if (message.includes("Nature has reclaimed")) iconId = "environment";
-  if (message.includes("people have revolted")) iconId = "people";
-  if (message.includes("adoration has turned to fanaticism")) iconId = "people";
-  if (message.includes("defenseless, has been conquered")) iconId = "army";
-  if (message.includes("army has seized control")) iconId = "army";
-  if (message.includes("kingdom is bankrupt")) iconId = "money";
-  if (message.includes("Economic collapse")) iconId = "money";
-  if (message.includes("You merged with the cosmic entity")) iconId = "star";
-  
-  const Icon = iconId ? resourceIcons[iconId] : null;
+export default function GameOverDialog({ isOpen, message, onRestart, year, cause }: GameOverDialogProps) {
+  const Icon = cause ? resourceIcons[cause] : null;
 
   return (
     <AlertDialog open={isOpen}>
-      <AlertDialogContent className="max-w-2xl">
+      <AlertDialogContent className="max-w-2xl animate-in fade-in-0 duration-1000">
         <AlertDialogHeader>
             {Icon && (
                 <div className="mx-auto mb-4">

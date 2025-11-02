@@ -579,6 +579,7 @@ export const gameCards: CardData[] = [
       },
     ],
     isSpecial: true,
+    blockedByFlags: ["creator_github_mercy"]
   },
   {
     id: 303,
@@ -599,6 +600,7 @@ export const gameCards: CardData[] = [
     ],
     isSpecial: true,
     requiredFlags: ["creator_github_mercy"],
+    blockedByFlags: ["creator_linkedin_prescience"],
   },
   {
     id: 304,
