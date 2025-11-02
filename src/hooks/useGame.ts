@@ -246,7 +246,7 @@ export const useGame = (user: User | null) => {
       }
     };
     checkSave();
-  }, [user, firestore]);
+  }, [user, firestore, gameState]);
 
   useEffect(() => {
     if (gameState !== 'playing' || !user || user.isAnonymous) return;
@@ -463,8 +463,8 @@ export const useGame = (user: User | null) => {
     }
 
     if (gameOverTrigger) {
-      setGameOverMessage(message);
       setYear(nextYear);
+      setGameOverMessage(message);
 
       if (endFlag) achievementsToAward.push(endFlag);
       if (nextYear >= 100) achievementsToAward.push('centenarian');
@@ -483,26 +483,27 @@ export const useGame = (user: User | null) => {
       } else {
         setGameState("gameover");
       }
-
+      return;
+    } 
+    
+    setStoryFlags(newStoryFlags);
+    const nextCardIndex = getNextCard();
+    if (nextCardIndex !== -1) {
+      setCurrentCardIndex(nextCardIndex);
+      setYear(nextYear);
     } else {
-       setStoryFlags(newStoryFlags);
-       const nextCardIndex = getNextCard();
-       if (nextCardIndex !== -1) {
-         setCurrentCardIndex(nextCardIndex);
-         setYear(nextYear);
-       } else {
-         setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
-         recordScore(nextYear);
-         deleteSave();
-         setGameState("gameover");
-       }
+      setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
+      recordScore(nextYear);
+      deleteSave();
+      setGameState("gameover");
     }
+    
   }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges, tutorialCompleted]);
 
   const returnToTitle = useCallback(async () => {
+    setHasSave(false);
     setGameState("title");
-    await deleteSave();
-  },[deleteSave]);
+  },[]);
 
   return {
     resources,
@@ -525,4 +526,5 @@ export const useGame = (user: User | null) => {
   };
 };
 
+    
     
