@@ -188,12 +188,11 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
         <Card 
           className={cn(
             "w-full h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col cursor-grab active:cursor-grabbing",
-            "group-hover:scale-105 transition-transform", // Corrected: Moved hover effect here
+            "group-hover:scale-105 transition-transform", 
             isCreatorCard 
               ? "group-hover:[filter:drop-shadow(0_0_15px_hsl(var(--foreground)/0.8))]"
               : "group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]"
           )}
-          // Corrected: Moved mouse/touch handlers to the scaling element to prevent flicker
           onMouseDown={(e) => handleDragStart(e.clientX)}
           onMouseMove={(e) => handleDragMove(e.clientX)}
           onMouseUp={handleDragEnd}
@@ -228,3 +227,5 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     </div>
   );
 }
+
+    
