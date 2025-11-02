@@ -70,8 +70,9 @@ service cloud.firestore {
       
       // Users can read their own achievements. No public list.
       allow get, list: if isOwner();
-      // Users can only create achievements for themselves. They cannot be updated or deleted.
-      allow create: if isOwner() && request.resource.data.userId == userId;
+      // A user can create/write their own achievement document.
+      allow write: if isOwner() && request.resource.data.userId == userId;
+      // Achievements cannot be updated or deleted once created.
       allow update, delete: if false;
     }
 
