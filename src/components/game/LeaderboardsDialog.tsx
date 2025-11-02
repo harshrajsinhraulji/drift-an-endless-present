@@ -4,7 +4,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { leaderboards } from "@/lib/leaderboard-data";
 import LeaderboardDisplay from "./LeaderboardDisplay";
-import { Separator } from "../ui/separator";
+import { Separator } from "@/components/ui/separator";
 
 interface LeaderboardsDialogProps {
     isOpen: boolean;
@@ -24,16 +24,15 @@ export default function LeaderboardsDialog({ isOpen, onClose, userProfile }: Lea
                 </DialogHeader>
                 <div className="flex flex-col gap-8 pt-6">
                     {leaderboards.map((lb, index) => (
-                       <>
+                       <React.Fragment key={lb.id}>
                         <LeaderboardDisplay
-                            key={lb.id}
                             leaderboardId={lb.id}
                             title={lb.name}
                             icon={lb.icon}
                             userProfile={userProfile}
                         />
                         {index < leaderboards.length - 1 && <Separator />}
-                       </>
+                       </React.Fragment>
                     ))}
                 </div>
             </DialogContent>
