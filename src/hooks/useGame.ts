@@ -10,7 +10,7 @@ import {
 import { allAchievements, type AchievementId } from '@/lib/achievements-data';
 import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
-import { doc, getDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export type Resources = Record<ResourceId, number>;
@@ -118,11 +118,9 @@ export const useGame = (user: User | null) => {
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
-            // This is a non-blocking update
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (error) {
-        // This is a non-critical error, so we just log it.
         console.error("An error occurred while trying to record score:", error);
     }
   }, [user, firestore]);
@@ -426,7 +424,9 @@ export const useGame = (user: User | null) => {
 
     // --- Story-based achievement checks ---
     if (newStoryFlags.has('plague_cured_by_sacrifice') || newStoryFlags.has('plague_cured_by_isolation')) {
-      achievementsToAward.push('plague_survivor');
+      if (!storyFlags.has('plague_cured_by_sacrifice') && !storyFlags.has('plague_cured_by_isolation')) {
+        achievementsToAward.push('plague_survivor');
+      }
     }
     
     const isAnyResourceLow = Object.values(newResources).some(v => v > 0 && v < 15);
@@ -440,7 +440,7 @@ export const useGame = (user: User | null) => {
     }
     
     const plagueChance = user?.isAnonymous ? 0.8 : 0.2;
-    if (newStoryFlags.has('plague_allowed_ship') && !newStoryFlags.has('plague_started') && Math.random() < plagueChance) {
+    if (newStoryFlags.has('plague_allowed_ship') && !storyFlags.has('plague_started') && Math.random() < plagueChance) {
         const plagueCard = gameCards.find(card => card.id === 104);
         if (plagueCard) {
             const newDeck = [...deck];
@@ -509,3 +509,5 @@ export const useGame = (user: User | null) => {
     deleteSave,
   };
 };
+
+    
