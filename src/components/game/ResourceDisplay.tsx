@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,12 +22,14 @@ const resourceIcons: Record<ResourceId, React.ElementType> = {
 
 const EffectIndicator = ({ effect }: { effect: number }) => {
   const change = Math.sign(effect);
-  const magnitude = Math.min(Math.ceil(Math.abs(effect) / 10), 4);
+  // Allow up to 5 dots to represent larger changes
+  const magnitude = Math.min(Math.ceil(Math.abs(effect) / 10), 5);
 
   if (change === 0) return null;
 
   return (
-    <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex flex-col gap-0.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+    // Changed to horizontal flex-row layout
+    <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex flex-row gap-0.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
       {Array.from({ length: magnitude }).map((_, i) => (
         <div
           key={i}
