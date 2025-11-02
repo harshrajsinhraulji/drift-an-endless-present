@@ -208,9 +208,8 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
         )}
 
         <div className="z-10 flex flex-col items-center justify-center flex-grow py-8">
-            <div className="flex flex-col items-center gap-2 mb-12 text-center">
+            <div className="flex flex-col items-center gap-2 mb-8 text-center">
               <h1 className="font-headline text-7xl text-primary tracking-wider">DRIFT</h1>
-              <p className="font-body text-2xl text-foreground/80">An Endless Present</p>
             </div>
             
             {user && userProfile ? (
