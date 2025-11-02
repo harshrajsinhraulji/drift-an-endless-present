@@ -4,7 +4,8 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for checkpoints,
- * while allowing public read access to leaderboards and leaderboard entries.
+ * allows authenticated users to create their own leaderboard entries,
+ * and allows public read access to leaderboards.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profiles, acting as the root for user-owned data.
@@ -13,21 +14,16 @@
  * - /leaderboards/{leaderboardId}/entries/{entryId}: Stores leaderboard entries for each leaderboard.
  *
  * Key Security Decisions:
- * - Users can only create, read, update, and delete their own checkpoints.
- * - Leaderboards are publicly readable. Write access is implicitly denied (prototyping mode).
- * - Leaderboard entries are publicly readable. Write access is implicitly denied (prototyping mode).
+ * - Users can only create, read, update, and delete their own checkpoints and profiles.
+ * - Authenticated users can create leaderboard entries for themselves.
+ * - Leaderboards and leaderboard entries are publicly readable.
+ * - Write access to leaderboards and updates/deletes to entries are restricted.
  * - User listing is disallowed for privacy.
  *
  * Denormalization for Authorization:
  * The `userId` is denormalized into the `Checkpoint` and `LeaderboardEntry` documents. This allows for
  * authorization rules to validate ownership without needing to perform costly `get()` operations
- * on parent documents. For example, a rule on `/users/{userId}/checkpoints/{checkpointId}` can
- * directly check `resource.data.userId == userId` instead of needing to fetch the user document.
- *
- * Structural Segregation:
- * User-specific data (checkpoints) is stored under the `/users/{userId}` path, while global data
- * (leaderboards) is stored in a top-level collection. This segregation simplifies access control
- * and improves query performance.
+ * on parent documents.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -50,8 +46,9 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == userId;
-      allow delete: if isOwner(userId) && request.resource.data.id == userId;
+      // Corrected & Hardened: Ensure the ID field cannot be changed on update.
+      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isOwner(userId);
     }
 
     /**
@@ -67,41 +64,45 @@ service cloud.firestore {
         return request.auth != null && request.auth.uid == userId;
       }
 
-      function isExistingOwner(userId) {
-        return request.auth != null && request.auth.uid == userId && resource != null;
+      // Corrected: Combined owner checks into one function.
+      function isDocumentOwner(doc) {
+        return request.auth != null && request.auth.uid == doc.userId;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId) && request.resource.data.userId == userId;
+      allow get, list: if isOwner(userId);
+      // Corrected: Validate ownership on the incoming data.
+      allow create: if isOwner(userId) && isDocumentOwner(request.resource.data);
+      // Corrected: Validate ownership on existing and incoming data, prevent changing owner.
+      allow update: if isOwner(userId) && isDocumentOwner(resource.data) && request.resource.data.userId == resource.data.userId;
+      // Corrected: On delete, check the ownership of the existing document.
+      allow delete: if isOwner(userId) && isDocumentOwner(resource.data);
     }
 
     /**
      * @description Controls access to leaderboard documents.
      * @path /leaderboards/{leaderboardId}
      * @allow (get, list) - Leaderboards are publicly readable.
-     * @deny (create, update, delete) - Leaderboard creation, modification, and deletion are not allowed in prototyping.
+     * @deny (create, update, delete) - Leaderboard creation, modification, and deletion are not allowed.
      * @principle Allows public read access to leaderboard definitions while restricting write access.
      */
     match /leaderboards/{leaderboardId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add admin validation if needed.
+      allow create, update, delete: if false; // Admin-only functionality.
     }
 
     /**
      * @description Controls access to leaderboard entry documents within a leaderboard.
      * @path /leaderboards/{leaderboardId}/entries/{entryId}
      * @allow (get, list) - Leaderboard entries are publicly readable.
-     * @deny (create, update, delete) - Leaderboard entry creation, modification, and deletion are not allowed in prototyping.
-     * @principle Allows public read access to leaderboard entries while restricting write access.
+     * @allow (create) - Authenticated user can create their own entry.
+     * @deny (update, delete) - Modifying/deleting entries is not allowed.
+     * @principle Allows public read access to scores and allows users to submit their own scores.
      */
     match /leaderboards/{leaderboardId}/entries/{entryId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add validation for creating leaderboard entries.
+      // Corrected: Allow authenticated users to create their own entries.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Entries are immutable by default.
     }
   }
 }
-
-    
