@@ -10,24 +10,19 @@ import {
 import { allAchievements, type AchievementId } from '@/lib/achievements-data';
 import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
-import { doc, getDoc, deleteDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useCheckpoint, type Checkpoint } from './useCheckpoint';
 
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
 export type StoryFlags = Set<StoryFlag>;
 
-function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
-  let timeout: NodeJS.Timeout | null = null;
-
-  return (...args: Parameters<F>): void => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => func(...args), waitFor);
-  };
+interface useGameProps {
+  user: User | null;
+  setHasSave: (hasSave: boolean) => void;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -46,9 +41,9 @@ const getRandomInt = (min: number, max: number) => {
 }
 
 const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
-const storyFlagsFromJSON = (flags: StoryFlag[] | undefined) => new Set(flags || []);
+export const storyFlagsFromJSON = (flags: StoryFlag[] | undefined) => new Set(flags || []);
 
-export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => void) => {
+export const useGame = ({ user, setHasSave }: useGameProps) => {
   const [resources, setResources] = useState<Resources>({
     environment: INITIAL_RESOURCE_VALUE,
     people: INITIAL_RESOURCE_VALUE,
@@ -70,13 +65,8 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
   const [cardInYearCount, setCardInYearCount] = useState(0);
 
   const firestore = useFirestore();
+  const { saveCheckpoint, deleteCheckpoint } = useCheckpoint(user);
 
-  const debouncedSave = useMemo(() => debounce((saveState: any) => {
-    if (user && firestore && gameState === "playing" && !user.isAnonymous) {
-        const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-        setDocumentNonBlocking(checkpointRef, saveState, { merge: true });
-    }
-  }, 1500), [user, firestore, gameState]);
 
   const awardAchievements = useCallback(async (achievementIds: AchievementId[]) => {
       if (!user || user.isAnonymous || !firestore || achievementIds.length === 0) return;
@@ -165,7 +155,6 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
     if (includeTutorial) {
       initialDeck = [...tutorialCards, ...shuffledMainDeck];
     } else {
-        // If mercy is given, inject the acknowledgement card.
         if (flags.has('creator_github_mercy') && !flags.has('creator_mercy_acknowledged')) {
             const mercyCard = gameCards.find(c => c.id === 304);
             if(mercyCard) {
@@ -192,75 +181,28 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
     setGameLoading(false);
   }, []);
 
-  const deleteSave = useCallback(async () => {
-    if (user && firestore && !user.isAnonymous) {
-      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-      try {
-        await deleteDoc(checkpointRef);
-      } catch (serverError) {
-         const permissionError = new FirestorePermissionError({
-            path: checkpointRef.path,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      }
-    }
-     setHasSave(false);
-  }, [user, firestore, setHasSave]);
-
-  const loadGame = useCallback(async () => {
-    if (!user || !firestore || user.isAnonymous) {
-        setGameState('title');
-        return;
-    };
+  const loadGame = useCallback((checkpoint: Checkpoint) => {
     setGameLoading(true);
-    const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-    try {
-      const docSnap = await getDoc(checkpointRef);
-      if (docSnap.exists()) {
-        const savedState = docSnap.data();
-        
-        if (!savedState.deckIds) {
-            console.warn("Old save format detected. Deleting and starting new game.");
-            await deleteSave();
-            startGame(savedState.tutorialCompleted || false);
-            return;
-        }
-        
-        const loadedDeck = savedState.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean) as CardData[];
-        
-        setResources(savedState.resources);
-        setDeck(loadedDeck);
-        setCurrentCardIndex(savedState.currentCardIndex);
-        setYear(savedState.year);
-        setCardInYearCount(savedState.cardInYearCount || 0);
-        setCardsPerYear(savedState.cardsPerYear || getRandomInt(2, 5));
-        setStoryFlags(storyFlagsFromJSON(savedState.storyFlags));
-        setPrescienceCharges(savedState.prescienceCharges || 0);
-        setTutorialCompleted(savedState.tutorialCompleted || false);
-        setGameState("playing");
-        setHasSave(true);
-        setLastEffects({});
-        setGameOverMessage("");
-      } else {
-        setHasSave(false);
-        startGame(tutorialCompleted);
-      }
-    } catch (serverError) {
-        const permissionError = new FirestorePermissionError({
-            path: checkpointRef.path,
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        startGame(tutorialCompleted);
-    } finally {
-        setGameLoading(false);
-    }
-  }, [user, firestore, startGame, deleteSave, setHasSave, tutorialCompleted]);
+    const loadedDeck = checkpoint.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean) as CardData[];
+    
+    setResources(checkpoint.resources);
+    setDeck(loadedDeck);
+    setCurrentCardIndex(checkpoint.currentCardIndex);
+    setYear(checkpoint.year);
+    setCardInYearCount(checkpoint.cardInYearCount || 0);
+    setCardsPerYear(checkpoint.cardsPerYear || getRandomInt(2, 5));
+    setStoryFlags(storyFlagsFromJSON(checkpoint.storyFlags));
+    setPrescienceCharges(checkpoint.prescienceCharges || 0);
+    setTutorialCompleted(checkpoint.tutorialCompleted || false);
+    setGameState("playing");
+    setLastEffects({});
+    setGameOverMessage("");
+    setGameLoading(false);
+  }, []);
 
   useEffect(() => {
     if (gameState !== 'playing' || !user || user.isAnonymous) return;
-    const saveState = {
+    const saveState: Checkpoint = {
       userId: user.uid,
       resources,
       deckIds: deck.map(card => card.id),
@@ -273,8 +215,8 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
       tutorialCompleted,
       updatedAt: new Date().toISOString(),
     };
-    debouncedSave(saveState);
-  }, [resources, deck, currentCardIndex, year, cardInYearCount, cardsPerYear, storyFlags, prescienceCharges, tutorialCompleted, user, debouncedSave, gameState]);
+    saveCheckpoint(saveState);
+  }, [resources, deck, currentCardIndex, year, cardInYearCount, cardsPerYear, storyFlags, prescienceCharges, tutorialCompleted, user, saveCheckpoint, gameState]);
 
 
   const getNextCard = useCallback(() => {
@@ -335,7 +277,6 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
 
-      // Reset resources to a weakened state
       const weakenedResources: Resources = {
         environment: getRandomInt(25, 45),
         people: getRandomInt(25, 45),
@@ -344,19 +285,12 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
       };
       setResources(weakenedResources);
       
-      // Award the achievement
       awardAchievements(['creator_mercy']);
 
-      // Instead of restarting, continue the game state from here
       const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
       const shuffledMainDeck = shuffleArray(regularCards);
       const mercyCard = gameCards.find(c => c.id === 304);
-      let newDeck = [];
-      if (mercyCard) {
-        newDeck = [mercyCard, ...shuffledMainDeck];
-      } else {
-        newDeck = shuffledMainDeck;
-      }
+      let newDeck = mercyCard ? [mercyCard, ...shuffledMainDeck] : shuffledMainDeck;
       
       setDeck(newDeck);
       setCurrentCardIndex(0);
@@ -366,10 +300,10 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
 
     } else {
       recordScore(year);
-      deleteSave();
+      deleteCheckpoint();
       setGameState("gameover");
     }
-  }, [gameState, storyFlags, year, recordScore, deleteSave, awardAchievements]);
+  }, [gameState, storyFlags, year, recordScore, deleteCheckpoint, awardAchievements]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -409,8 +343,6 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
             setCardsPerYear(getRandomInt(2,5));
         }
     }
-
-    setCardInYearCount(nextCardInYearCount);
     
     if (prescienceCharges > 0) {
       setPrescienceCharges(c => c - 1);
@@ -456,7 +388,6 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
         }
     }
 
-    // --- Story-based achievement checks ---
     if (newStoryFlags.has('plague_cured_by_sacrifice') || newStoryFlags.has('plague_cured_by_isolation')) {
       if (!storyFlags.has('plague_cured_by_sacrifice') && !storyFlags.has('plague_cured_by_isolation')) {
         achievementsToAward.push('plague_survivor');
@@ -493,8 +424,6 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
     }
 
     if (gameOverTrigger) {
-      setYear(nextYear);
-
       if (endFlag) achievementsToAward.push(endFlag);
       if (nextYear >= 100) achievementsToAward.push('centenarian');
       else if (nextYear >= 50) achievementsToAward.push('half_centenarian');
@@ -506,7 +435,9 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
       const wasMercyUsed = storyFlags.has('creator_github_mercy');
       
       setGameOverMessage(message);
-      deleteSave();
+      setYear(nextYear);
+      setCardInYearCount(nextCardInYearCount);
+      deleteCheckpoint();
 
       if (!wasMercyUsed) {
         setGameState("creator_intervention");
@@ -518,6 +449,7 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
     
     setStoryFlags(newStoryFlags);
     setYear(nextYear);
+    setCardInYearCount(nextCardInYearCount);
 
     const nextCardIndex = getNextCard();
     if (nextCardIndex !== -1) {
@@ -525,15 +457,16 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
     } else {
       setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
       recordScore(nextYear);
-      deleteSave();
+      deleteCheckpoint();
       setGameState("gameover");
     }
     
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges, tutorialCompleted]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteCheckpoint, recordScore, prescienceCharges, tutorialCompleted]);
 
-  const returnToTitle = useCallback(async () => {
+  const returnToTitle = useCallback(() => {
     setGameState("title");
-  },[]);
+    setHasSave(false); // Assume save is gone after game over
+  },[setHasSave]);
 
   return {
     resources,
@@ -552,10 +485,7 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
     handleChoice,
     handleCreatorIntervention,
     returnToTitle,
-    deleteSave,
     tutorialCompleted,
     setTutorialCompleted,
   };
 };
-
-    
