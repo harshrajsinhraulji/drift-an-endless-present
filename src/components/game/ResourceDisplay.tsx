@@ -36,7 +36,7 @@ const EffectIndicator = ({ effect }: { effect: number }) => {
           key={i}
           className={cn(
             "w-1 h-1 rounded-full",
-            change > 0 ? "bg-primary" : "bg-destructive"
+            change > 0 ? "bg-green-400" : "bg-red-500"
           )}
         />
       ))}
@@ -73,8 +73,6 @@ export default function ResourceDisplay({ resources, effects, gameOverCause }: R
             {effect && <EffectIndicator effect={effect} />}
             <Icon className={cn(
                 "w-7 h-7 text-primary transition-all duration-300",
-                isLow && "animate-pulse text-destructive",
-                isHigh && "animate-pulse text-yellow-400",
                 isGameOverCause && "text-destructive animate-pulse scale-150"
             )} aria-label={`${id} icon`} />
             <div className="flex flex-col-reverse gap-1">
@@ -85,7 +83,7 @@ export default function ResourceDisplay({ resources, effects, gameOverCause }: R
                     "w-1.5 h-1.5 rounded-full transition-colors duration-300",
                     i < dotCount ? "bg-primary" : "bg-muted",
                      isLow && i < dotCount && "bg-destructive",
-                     isHigh && i < dotCount && "bg-yellow-400",
+                     isHigh && i < dotCount && "bg-green-400",
                      isGameOverCause && "bg-destructive"
                   )}
                 />
