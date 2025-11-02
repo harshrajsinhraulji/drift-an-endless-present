@@ -132,7 +132,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
 
   return (
     <TooltipProvider>
-      <div className="relative flex flex-col items-center justify-center min-h-screen w-full max-w-7xl animate-in fade-in-0 duration-500 overflow-y-auto p-4 sm:p-8">
+      <div className="relative flex flex-col items-center justify-center h-full w-full max-w-7xl animate-in fade-in-0 duration-500 p-4 sm:p-8">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative w-96 h-96">
               <div className="absolute inset-0 border-[2px] border-primary/10 rounded-full animate-spin-slow"></div>
@@ -165,11 +165,9 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
             
             {user && userProfile ? (
               <div className="flex flex-col items-center gap-6">
-                {hasSave && (
-                    <Button onClick={onContinue} size="lg" className="w-64 font-headline text-xl">
-                        Continue Your Reign
-                    </Button>
-                )}
+                <Button onClick={onContinue} size="lg" className="w-64 font-headline text-xl" disabled={!hasSave}>
+                    Continue Your Reign
+                </Button>
                 <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-64 font-headline text-xl">
                   Begin a New Reign
                 </Button>
@@ -234,7 +232,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
             )}
         </div>
         
-        <div className="absolute bottom-4 flex justify-center items-center gap-6 z-10 py-4">
+        <div className="flex justify-center items-center gap-6 z-10 py-4">
           <Tooltip>
             <TooltipTrigger asChild>
                 <Button onClick={() => setIsLeaderboardsOpen(true)} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary" disabled={!userProfile}>
