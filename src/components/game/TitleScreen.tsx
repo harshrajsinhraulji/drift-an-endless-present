@@ -14,12 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useFirestore, useUser, useCollection } from "@/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { useFirestore, useUser, useCollection, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { doc, setDoc, getDoc, collection } from "firebase/firestore";
 import LeaderboardsDialog from "./LeaderboardsDialog";
 import { SoundContext } from "@/contexts/SoundContext";
 import type { UserAchievement } from "@/lib/achievements-data";
-import { collection } from "firebase/firestore";
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -73,9 +72,13 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
 
   const playClickSound = () => {
     if (sfxVolume > 0) {
-      const audio = new Audio('/assets/sounds/click.mp3');
-      audio.volume = sfxVolume;
-      audio.play().catch(e => {});
+      try {
+        const audio = new Audio('/assets/sounds/click.mp3');
+        audio.volume = sfxVolume;
+        audio.play().catch(e => {});
+      } catch (e) {
+        // Audio context can fail in some environments
+      }
     }
   };
 
@@ -106,7 +109,14 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
           email: user.email || '',
           username: user.displayName || user.email?.split('@')[0] || `Ruler-${user.uid.substring(0,4)}`,
         };
-        setDoc(profileRef, newProfileData).catch(e => console.error("Failed to create user profile", e));
+        setDoc(profileRef, newProfileData).catch(e => {
+            const permissionError = new FirestorePermissionError({
+                path: profileRef.path,
+                operation: 'create',
+                requestResourceData: newProfileData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
         setUserProfile(newProfileData);
         if (!newProfileData.username) {
             setUsernameModalOpen(true);
@@ -129,6 +139,12 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
       setUsernameModalOpen(false);
     } catch (e) {
       setError("Failed to etch the name. Please try again.");
+       const permissionError = new FirestorePermissionError({
+            path: profileRef.path,
+            operation: 'update',
+            requestResourceData: { username: newUsername.trim() },
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
   };
 
@@ -392,3 +408,5 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     </TooltipProvider>
   );
 }
+
+    
