@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import type { Choice } from "@/lib/game-data";
 import { gameCards, getCardText } from "@/lib/game-data";
 import ResourceDisplay from "./ResourceDisplay";
