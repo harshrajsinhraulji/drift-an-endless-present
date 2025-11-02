@@ -80,7 +80,7 @@ export default function Game() {
   }
 
   if (gameState === "title") {
-    return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} onDeleteSave={deleteSave} />;
+    return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} onDeleteSave={deleteSave} gameState={gameState} />;
   }
   
   if (gameState === "creator_intervention" && creatorCard) {

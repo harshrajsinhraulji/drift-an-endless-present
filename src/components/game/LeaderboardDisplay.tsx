@@ -1,11 +1,12 @@
 
 'use client';
 import { useMemo } from 'react';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { useFirestore, useCollection, useDoc } from '@/firebase';
+import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
 import type { LeaderboardEntry as LeaderboardEntryType } from '@/lib/leaderboard-data';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Minus, UserCircle } from 'lucide-react';
+import { Separator } from '../ui/separator';
 
 interface LeaderboardDisplayProps {
     leaderboardId: string;
@@ -14,11 +15,21 @@ interface LeaderboardDisplayProps {
     userProfile: { username: string; id: string } | null;
 }
 
-const LeaderboardEntry = ({ rank, username, score, isCurrentUser }: { rank: number; username: string; score: number, isCurrentUser: boolean }) => {
+const LeaderboardEntry = ({ rank, username, score, isCurrentUser, isCompact = false }: { rank: number | string; username: string; score: number, isCurrentUser: boolean, isCompact?: boolean }) => {
     return (
-        <div className={cn("flex items-center justify-between text-base", isCurrentUser && "text-primary font-bold")}>
+        <div className={cn(
+            "flex items-center justify-between",
+            isCurrentUser && "text-primary font-bold",
+            isCompact ? "text-sm" : "text-base"
+        )}>
             <div className="flex items-center gap-3">
-                <span className={cn("w-6 text-center text-lg", rank <= 3 && "font-bold")}>{rank}</span>
+                <span className={cn(
+                    "w-6 text-center", 
+                    rank <= 3 && "font-bold",
+                    isCompact ? "text-sm" : "text-lg",
+                )}>
+                    {rank}
+                </span>
                 <span className="truncate">{username}</span>
             </div>
             <span className="font-bold">{score}</span>
@@ -34,11 +45,21 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
         return query(
             collection(firestore, 'leaderboards', leaderboardId, 'entries'),
             orderBy('score', 'desc'),
-            limit(3) // Corrected: Reduced limit to 3 for a more minimalist "top 3" display.
+            limit(3)
         );
     }, [firestore, leaderboardId]);
 
-    const { data: topEntries, isLoading } = useCollection<LeaderboardEntryType>(leaderboardQuery);
+    const userEntryRef = useMemo(() => {
+        if (!firestore || !userProfile) return null;
+        return doc(firestore, 'leaderboards', leaderboardId, 'entries', userProfile.id);
+    }, [firestore, leaderboardId, userProfile]);
+
+    const { data: topEntries, isLoading: isLoadingTop } = useCollection<LeaderboardEntryType>(leaderboardQuery);
+    const { data: userEntry, isLoading: isLoadingUser } = useDoc<LeaderboardEntryType>(userEntryRef);
+
+    const isLoading = isLoadingTop || isLoadingUser;
+
+    const userIsInTop = topEntries?.some(entry => entry.userId === userProfile?.id);
 
     return (
         <div className="space-y-4">
@@ -47,7 +68,7 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
                 {title}
             </h4>
             {isLoading ? (
-                <div className="flex justify-center items-center h-24">
+                <div className="flex justify-center items-center h-40">
                     <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
                 </div>
             ) : topEntries && topEntries.length > 0 ? (
@@ -61,6 +82,18 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
                             isCurrentUser={entry.userId === userProfile?.id}
                         />
                     ))}
+                    {!userIsInTop && userEntry && (
+                       <>
+                        <Separator className="my-3" />
+                         <LeaderboardEntry
+                            rank={"-"} // We don't know the exact rank, just show their score
+                            username={userEntry.username}
+                            score={userEntry.score}
+                            isCurrentUser={true}
+                            isCompact={true}
+                        />
+                       </>
+                    )}
                 </div>
             ) : (
                 <p className="text-sm text-muted-foreground pt-2">The scrolls are empty. No legends have been written... yet.</p>

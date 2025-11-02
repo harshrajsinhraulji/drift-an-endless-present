@@ -25,6 +25,7 @@ interface TitleScreenProps {
   onContinue: () => void;
   hasSave: boolean;
   onDeleteSave: () => Promise<void>;
+  gameState: string;
 }
 
 interface UserProfile {
@@ -49,7 +50,7 @@ const getAuthErrorMessage = (errorCode: string): string => {
     }
 }
 
-export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave }: TitleScreenProps) {
+export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave, gameState }: TitleScreenProps) {
   const { user } = useUser();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLeaderboardsOpen, setIsLeaderboardsOpen] = useState(false);
@@ -122,6 +123,12 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
             setUsernameModalOpen(true);
         }
       }
+    }).catch(e => {
+       const permissionError = new FirestorePermissionError({
+            path: profileRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
 
   }, [user, firestore]);
@@ -133,24 +140,25 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     };
     setError('');
     const profileRef = doc(firestore, 'users', user.uid);
-    try {
-      await setDoc(profileRef, { username: newUsername.trim() }, { merge: true });
+    setDoc(profileRef, { username: newUsername.trim() }, { merge: true }).then(() => {
       setUserProfile(prev => prev ? { ...prev, username: newUsername.trim() } : null);
       setUsernameModalOpen(false);
-    } catch (e) {
-      setError("Failed to etch the name. Please try again.");
+    }).catch(e => {
+       setError("Failed to etch the name. Please try again.");
        const permissionError = new FirestorePermissionError({
             path: profileRef.path,
             operation: 'update',
             requestResourceData: { username: newUsername.trim() },
         });
         errorEmitter.emit('permission-error', permissionError);
-    }
+    });
   };
 
   const handleNewGameClick = () => {
     playClickSound();
-    if (hasSave) {
+    if (user?.isAnonymous && gameState === 'playing') {
+      setNewGameConfirmOpen(true);
+    } else if (hasSave) {
       setNewGameConfirmOpen(true);
     } else {
       onStart();
@@ -159,7 +167,9 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
 
   const handleNewGameConfirm = async () => {
     playClickSound();
-    await onDeleteSave();
+    if (!user?.isAnonymous) {
+      await onDeleteSave();
+    }
     onStart();
     setNewGameConfirmOpen(false);
   };
@@ -408,5 +418,3 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     </TooltipProvider>
   );
 }
-
-    
