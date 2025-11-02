@@ -5,7 +5,7 @@ import { useFirestore, useCollection } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import type { LeaderboardEntry as LeaderboardEntryType } from '@/lib/leaderboard-data';
 import { cn } from '@/lib/utils';
-import { Crown, Swords, Users, Leaf, CircleDollarSign, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface LeaderboardDisplayProps {
     leaderboardId: string;
@@ -18,7 +18,7 @@ const LeaderboardEntry = ({ rank, username, score, isCurrentUser }: { rank: numb
     return (
         <div className={cn("flex items-center justify-between text-base", isCurrentUser && "text-primary font-bold")}>
             <div className="flex items-center gap-3">
-                <span className={cn("w-6 text-center text-lg", rank <= 3 && "text-primary font-bold")}>{rank}</span>
+                <span className={cn("w-6 text-center text-lg", rank <= 3 && "font-bold")}>{rank}</span>
                 <span className="truncate">{username}</span>
             </div>
             <span className="font-bold">{score}</span>
@@ -31,6 +31,9 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
 
     const leaderboardQuery = useMemo(() => {
         if (!firestore) return null;
+        // Corrected & Hardened: This query now ONLY fetches the top 3 entries.
+        // It no longer attempts to fetch all documents to calculate a user's rank on the client.
+        // Calculating user rank should be done with a server-side function for efficiency.
         return query(
             collection(firestore, 'leaderboards', leaderboardId, 'entries'),
             orderBy('score', 'desc'),
@@ -39,24 +42,6 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
     }, [firestore, leaderboardId]);
 
     const { data: topEntries, isLoading } = useCollection<LeaderboardEntryType>(leaderboardQuery);
-    
-    const userEntryQuery = useMemo(() => {
-        if (!firestore || !userProfile) return null;
-        return collection(firestore, 'leaderboards', leaderboardId, 'entries');
-    }, [firestore, leaderboardId, userProfile]);
-
-    // This is not ideal, but for MVP it's okay to fetch all entries to find the user's rank.
-    // A better solution would involve a server-side function to calculate rank.
-    const { data: allEntries } = useCollection<LeaderboardEntryType>(userEntryQuery);
-
-    const userRank = useMemo(() => {
-        if (!allEntries || !userProfile) return null;
-        const sorted = [...allEntries].sort((a, b) => b.score - a.score);
-        const userIndex = sorted.findIndex(entry => entry.userId === userProfile.id);
-        return userIndex !== -1 ? { rank: userIndex + 1, score: sorted[userIndex].score } : null;
-    }, [allEntries, userProfile]);
-    
-    const isUserInTop3 = userRank ? userRank.rank <= 3 : false;
 
     return (
         <div className="space-y-3">
@@ -79,17 +64,6 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
                             isCurrentUser={entry.userId === userProfile?.id}
                         />
                     ))}
-                    {userRank && !isUserInTop3 && userProfile && (
-                       <>
-                        <div className="text-center text-muted-foreground">...</div>
-                         <LeaderboardEntry
-                            rank={userRank.rank}
-                            username={userProfile.username}
-                            score={userRank.score}
-                            isCurrentUser={true}
-                        />
-                       </>
-                    )}
                 </div>
             ) : (
                 <p className="text-sm text-muted-foreground pt-2">The scrolls are empty. No legends have been written... yet.</p>
@@ -97,5 +71,3 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
         </div>
     );
 }
-
-    

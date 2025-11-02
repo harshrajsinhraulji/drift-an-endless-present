@@ -15,11 +15,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { User } from "firebase/auth";
-import { useFirestore, useCollection } from "@/firebase";
-import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import type { LeaderboardEntry as LeaderboardEntryType } from "@/lib/leaderboard-data";
 import { leaderboards } from "@/lib/leaderboard-data";
 import LeaderboardDisplay from "./LeaderboardDisplay";
+import { useGame } from "@/hooks/useGame";
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -51,7 +52,6 @@ const getAuthErrorMessage = (errorCode: string): string => {
     }
 }
 
-
 export default function TitleScreen({ onStart, onContinue, hasSave, user, onDeleteSave }: TitleScreenProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -76,19 +76,16 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
       if (docSnap.exists()) {
         const profile = docSnap.data() as UserProfile;
         setUserProfile(profile);
-        // If profile exists but username is missing, prompt user.
         if (!profile.username) {
           setUsernameModalOpen(true);
         }
       } else {
-        // If profile doesn't exist, create it.
         const newProfileData: UserProfile = {
           id: user.uid,
           email: user.email || '',
           username: user.displayName || '',
         };
         setDoc(profileRef, newProfileData).catch(e => console.error("Failed to create user profile", e));
-        // After creating profile, check if username is still missing.
         if (!newProfileData.username) {
             setUsernameModalOpen(true);
         }
@@ -135,11 +132,6 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
       setError(getAuthErrorMessage(e.code));
     }
   };
-  
-  const currentUserEntry = (leaderboardData: LeaderboardEntryType[] | null) => {
-    if (!leaderboardData || !userProfile?.username) return null;
-    return leaderboardData.find(entry => entry.userId === user?.uid)
-  }
 
   return (
     <TooltipProvider>
@@ -186,31 +178,33 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
                             Your journey is written in the stars.
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-1 gap-4">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div>
-                                <Button onClick={onContinue} size="lg" className="w-full font-headline text-xl h-16" disabled={!hasSave}>
-                                  Continue Your Reign
-                                  <span className="text-sm block text-primary-foreground/70 -mt-1 font-body">A past life awaits.</span>
+                        <CardContent className="grid grid-cols-1 gap-6">
+                           <div className="flex flex-col items-center">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button onClick={onContinue} size="lg" className="w-full font-headline text-xl" disabled={!hasSave}>
+                                    Continue Your Reign
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Load your last checkpoint.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                             <p className="text-sm text-primary-foreground/70 mt-2 font-body">A past life awaits.</p>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-full font-headline text-xl">
+                                    Begin Anew
                                 </Button>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Load your last checkpoint.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-full font-headline text-xl h-16">
-                                Begin Anew
-                                <span className="text-sm block text-foreground/70 -mt-1 font-body">Forge a new destiny.</span>
-                              </Button>
-                            </TooltipTrigger>
-                             <TooltipContent>
-                              <p>Start a new game. This will erase any prior save.</p>
-                            </TooltipContent>
-                          </Tooltip>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                <p>Start a new game. This will erase any prior save.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <p className="text-sm text-foreground/70 mt-2 font-body">Forge a new destiny.</p>
+                          </div>
                         </CardContent>
                       </Card>
                   </div>
@@ -220,7 +214,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
                         <CardTitle>Legends of the Realm</CardTitle>
                         <CardDescription>The histories of rulers, past and present.</CardDescription>
                       </CardHeader>
-                      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {leaderboards.map(lb => (
                           <LeaderboardDisplay 
                             key={lb.id} 
@@ -347,5 +341,3 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
     </TooltipProvider>
   );
 }
-
-    
