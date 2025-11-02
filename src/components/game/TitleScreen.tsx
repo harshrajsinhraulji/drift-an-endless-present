@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { User } from "firebase/auth";
 
 interface TitleScreenProps {
@@ -73,16 +73,35 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user }: Titl
           </div>
           
           {user ? (
-            <div className="flex flex-col gap-4 w-full max-w-xs">
-              {hasSave && (
-                <Button onClick={onContinue} className="w-full font-headline text-xl" size="lg">Continue</Button>
-              )}
-               <Button onClick={onStart} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
-                New Game
-              </Button>
-               <Button onClick={signOutUser} variant="ghost" className="w-full font-headline text-sm">
-                Sign Out
-              </Button>
+            <div className="w-full max-w-sm space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile</CardTitle>
+                </CardHeader>
+                <CardContent className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                  <Button onClick={signOutUser} variant="ghost" size="sm">
+                    Sign Out
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Checkpoints</CardTitle>
+                  <CardDescription>
+                    {hasSave ? "A previous game has been saved." : "No saved game found."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  {hasSave && (
+                    <Button onClick={onContinue} className="w-full font-headline text-xl" size="lg">Continue</Button>
+                  )}
+                  <Button onClick={onStart} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
+                    New Game
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           ) : (
             <Tabs defaultValue="signin" className="w-[400px]">
