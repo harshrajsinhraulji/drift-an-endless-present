@@ -14,14 +14,10 @@ import { Button } from "../ui/button";
 import { Eye } from "lucide-react";
 import { SoundContext } from "@/contexts/SoundContext";
 import { useGame } from '@/hooks/useGame';
-import type { User } from "firebase/auth";
+import { useUser } from "@/firebase";
 
-interface GameProps {
-  user: User | null;
-  isLoading: boolean;
-}
-
-export default function Game({ user, isLoading }: GameProps) {
+export default function Game() {
+  const { user, isUserLoading } = useUser();
   const {
     resources,
     deck,
@@ -33,7 +29,7 @@ export default function Game({ user, isLoading }: GameProps) {
     storyFlags,
     prescienceCharges,
     isGameLoading,
-    startNewGmae,
+    startGame,
     loadGame,
     handleChoice,
     handleCreatorIntervention,
@@ -67,10 +63,6 @@ export default function Game({ user, isLoading }: GameProps) {
   
   const handleChoiceWithPrescience = (choice: Choice) => {
     if (prescienceWasUsed) {
-      // This is not a great way to handle state updates.
-      // A reducer (like in useGame) would be better.
-      // For now, let's just assume useGame hook handles this logic.
-      // setPrescienceCharges(p => p - 1); 
       setPrescienceWasUsed(false);
     }
     setShowPrescienceThisTurn(false);
@@ -96,7 +88,7 @@ export default function Game({ user, isLoading }: GameProps) {
   const cardText = currentCard ? getCardText(currentCard, resources) : "";
   const creatorCard = gameCards.find(c => c.id === 302);
   
-  if (isLoading || isGameLoading) {
+  if (isUserLoading || (user && isGameLoading)) {
     return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
@@ -108,10 +100,10 @@ export default function Game({ user, isLoading }: GameProps) {
     );
   }
 
-  if (gameState === "title") {
-    return <TitleScreen onStart={startNewGmae} onContinue={loadGame} hasSave={hasSave} />;
+  if (!user || gameState === "title") {
+    return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} user={user} />;
   }
-
+  
   if (gameState === "creator_intervention" && creatorCard) {
     return (
        <div className="flex flex-col gap-6 items-center w-full max-w-2xl">

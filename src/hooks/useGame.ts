@@ -16,7 +16,6 @@ export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
 export type StoryFlags = Set<StoryFlag>;
 
-// Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -26,10 +25,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return newArray;
 };
 
-// Helper function to convert Set to Array for JSON serialization
 const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
-// Helper function to convert Array back to Set after JSON parsing
-const storyFlagsFromJSON = (flags: StoryFlag[]) => new Set(flags);
+const storyFlagsFromJSON = (flags: StoryFlag[] | undefined) => new Set(flags || []);
 
 export const useGame = (user: User | null) => {
   const [resources, setResources] = useState<Resources>({
@@ -50,7 +47,7 @@ export const useGame = (user: User | null) => {
   const [hasSave, setHasSave] = useState(false);
   const firestore = useFirestore();
 
-  const startNewGame = useCallback((flags: StoryFlags = new Set()) => {
+  const startGame = useCallback((flags: StoryFlags = new Set()) => {
     setResources({
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
@@ -92,27 +89,28 @@ export const useGame = (user: User | null) => {
         setDeck(savedState.deck);
         setCurrentCardIndex(savedState.currentCardIndex);
         setYear(savedState.year);
-        setStoryFlags(storyFlagsFromJSON(savedState.storyFlags || []));
+        setStoryFlags(storyFlagsFromJSON(savedState.storyFlags));
         setPrescienceCharges(savedState.prescienceCharges || 0);
         setGameState("playing");
         setLastEffects({});
         setGameOverMessage("");
       } else {
-        startNewGame();
+        startGame();
       }
     } catch (error) {
         console.error("Error loading game:", error);
-        startNewGame(); // Start new game on error
+        startGame(); 
     } finally {
         setGameLoading(false);
     }
-  }, [user, firestore, startNewGame]);
+  }, [user, firestore, startGame]);
 
   useEffect(() => {
     const checkSave = async () => {
       if (!user || !firestore) {
         setGameLoading(false);
         setGameState('title');
+        setHasSave(false);
         return;
       }
       setGameLoading(true);
@@ -125,18 +123,10 @@ export const useGame = (user: User | null) => {
         setHasSave(false);
       } finally {
         setGameLoading(false);
-        // After checking for a save, go to title screen.
-        // The user will then choose to "Continue" or "Start New".
         setGameState('title');
       }
     };
-
-    if (user) {
-      checkSave();
-    } else {
-      setGameState('title');
-      setGameLoading(false);
-    }
+    checkSave();
   }, [user, firestore]);
 
   useEffect(() => {
@@ -218,7 +208,7 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       
-      startNewGame(newFlags);
+      startGame(newFlags);
       const thankYouCard = gameCards.find(c => c.id === 304);
       if (thankYouCard) {
         setDeck(currentDeck => [thankYouCard, ...currentDeck]);
@@ -228,7 +218,7 @@ export const useGame = (user: User | null) => {
     } else {
       setGameState("gameover");
     }
-  }, [storyFlags, startNewGame]);
+  }, [storyFlags, startGame]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -257,11 +247,11 @@ export const useGame = (user: User | null) => {
     }
     
     setResources(newResources);
-    
+
     if (currentCard.id !== 0 && currentCard.id !== 304) {
       setYear(y => y + 1);
     }
-
+    
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
@@ -298,7 +288,6 @@ export const useGame = (user: User | null) => {
             setDeck(newDeck);
         }
     }
-
 
     if (year > 10 && !storyFlags.has('creator_linkedin_prescience') && !deck.some(c => c.id === 303) && Math.random() < 0.2) {
       const creatorCard = gameCards.find(c => c.id === 303);
@@ -351,7 +340,7 @@ export const useGame = (user: User | null) => {
     storyFlags,
     prescienceCharges,
     isGameLoading,
-    startNewGame,
+    startGame,
     loadGame,
     handleChoice,
     handleCreatorIntervention,

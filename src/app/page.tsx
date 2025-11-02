@@ -3,19 +3,13 @@
 import Game from '@/components/game/Game';
 import { SoundProvider } from '@/contexts/SoundContext';
 import { FirebaseClientProvider } from '@/firebase';
-import AuthWrapper from '@/components/game/AuthWrapper';
-import type { User } from 'firebase/auth';
 
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-8 overflow-hidden">
       <FirebaseClientProvider>
         <SoundProvider>
-          <AuthWrapper>
-            {(user: User | null, isLoading: boolean) => (
-              <Game user={user} isLoading={isLoading} />
-            )}
-          </AuthWrapper>
+          <Game />
         </SoundProvider>
       </FirebaseClientProvider>
     </main>

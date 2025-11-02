@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import SettingsDialog from "./SettingsDialog";
-import { Settings, Github, Linkedin, Cog } from "lucide-react";
+import { Cog, Github, Linkedin } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { signInWithGoogle, signOutUser, signUpWithEmail, signInWithEmail } from "@/firebase/auth";
@@ -12,14 +12,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { User } from "firebase/auth";
 
 interface TitleScreenProps {
   onStart: () => void;
   onContinue: () => void;
   hasSave: boolean;
+  user: User | null;
 }
 
-export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScreenProps) {
+export default function TitleScreen({ onStart, onContinue, hasSave, user }: TitleScreenProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,10 +46,18 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    try {
+      await signInWithGoogle();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
   return (
     <div className="relative flex flex-col items-center justify-center h-screen w-full max-w-2xl animate-in fade-in-0 duration-500 overflow-hidden p-6">
       
-      {/* Background visual element */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="relative w-96 h-96">
             <div className="absolute inset-0 border-[2px] border-primary/10 rounded-full animate-spin-slow"></div>
@@ -61,14 +72,76 @@ export default function TitleScreen({ onStart, onContinue, hasSave }: TitleScree
             <p className="font-body text-xl text-foreground/80">An Endless Present</p>
           </div>
           
-           <div className="flex flex-col gap-4 w-full max-w-xs">
-            {hasSave && (
-              <Button onClick={onContinue} className="w-full font-headline text-xl" size="lg">Continue</Button>
-            )}
-             <Button onClick={onStart} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
-              New Game
-            </Button>
-          </div>
+          {user ? (
+            <div className="flex flex-col gap-4 w-full max-w-xs">
+              {hasSave && (
+                <Button onClick={onContinue} className="w-full font-headline text-xl" size="lg">Continue</Button>
+              )}
+               <Button onClick={onStart} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
+                New Game
+              </Button>
+               <Button onClick={signOutUser} variant="ghost" className="w-full font-headline text-sm">
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Tabs defaultValue="signin" className="w-[400px]">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sign In</CardTitle>
+                    <CardDescription>
+                      Access your saved game.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                     {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+                    <div className="space-y-2">
+                      <Label htmlFor="email-in">Email</Label>
+                      <Input id="email-in" type="email" placeholder="m@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password-in">Password</Label>
+                      <Input id="password-in" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex-col gap-4">
+                    <Button onClick={handleEmailSignIn} className="w-full">Sign In</Button>
+                    <Button onClick={handleGoogleSignIn} variant="outline" className="w-full">Sign In with Google</Button>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+              <TabsContent value="register">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Register</CardTitle>
+                    <CardDescription>
+                      Create an account to save your progress.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+                    <div className="space-y-2">
+                      <Label htmlFor="email-up">Email</Label>
+                      <Input id="email-up" type="email" placeholder="m@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password-up">Password</Label>
+                      <Input id="password-up" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex-col gap-4">
+                    <Button onClick={handleEmailSignUp} className="w-full">Register</Button>
+                     <Button onClick={handleGoogleSignIn} variant="outline" className="w-full">Sign up with Google</Button>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
 
       </div>
       
