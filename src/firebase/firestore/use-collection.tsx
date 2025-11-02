@@ -54,7 +54,7 @@ export function useCollection<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [JSON.stringify(query)]); // Simple serialization for dependency check
+  }, [query]); // CORRECTED: Dependency is now the query object itself. This relies on the calling component to memoize the query.
 
   return { data, isLoading, error };
 }

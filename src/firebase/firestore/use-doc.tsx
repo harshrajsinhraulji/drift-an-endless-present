@@ -54,7 +54,7 @@ export function useDoc<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [ref?.path]);
+  }, [ref]); // CORRECTED: Dependency is now the ref object itself. This relies on the calling component to memoize the ref.
 
   return { data, isLoading, error };
 }
