@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useContext } from "react";
@@ -19,6 +18,7 @@ import { doc, setDoc, getDoc, collection } from "firebase/firestore";
 import LeaderboardsDialog from "./LeaderboardsDialog";
 import { SoundContext } from "@/contexts/SoundContext";
 import type { UserAchievement } from "@/lib/achievements-data";
+import { SmokeBackground } from "../ui/smoke-background";
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -191,15 +191,8 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
 
   return (
     <TooltipProvider>
+      <SmokeBackground>
       <div className="flex h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="relative w-[500px] h-[500px]">
-              <div className="absolute inset-0 border-[2px] border-primary/10 rounded-full animate-[spin_45s_linear_infinite]"></div>
-              <div className="absolute inset-10 border-[1px] border-primary/10 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
-              <div className="absolute inset-20 border-[1px] border-primary/10 rounded-full animate-[spin_35s_linear_infinite]"></div>
-               <div className="absolute inset-32 border-[1px] border-primary/5 rounded-full animate-[spin_30s_linear_infinite_reverse]"></div>
-          </div>
-        </div>
         
         {user && userProfile && (
            <div className="absolute top-4 right-4 z-20 flex items-center gap-4 text-foreground/80">
@@ -218,8 +211,8 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
         )}
 
         <div className="z-10 flex flex-col items-center justify-center flex-grow py-8">
-            <div className="flex flex-col items-center gap-2 mb-16 text-center">
-              <h1 className="font-headline text-8xl text-primary tracking-wider">DRIFT</h1>
+            <div className="flex flex-col items-center gap-2 mb-8 text-center">
+              <h1 className="font-headline text-7xl text-primary tracking-wider">DRIFT</h1>
               <p className="font-body text-2xl text-foreground/80">An Endless Present</p>
             </div>
             
@@ -416,6 +409,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
           </DialogContent>
         </Dialog>
       </div>
+      </SmokeBackground>
     </TooltipProvider>
   );
 }
