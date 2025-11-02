@@ -9,12 +9,24 @@ import {
 } from '@/lib/game-data';
 import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
 export type StoryFlags = Set<StoryFlag>;
+
+// Debounce function to limit the rate of Firestore writes
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return (...args: Parameters<F>): void => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+}
 
 const shuffleArray = <T,>(array: T[]): T[] => {
   const newArray = [...array];
@@ -46,6 +58,16 @@ export const useGame = (user: User | null) => {
   const [isGameLoading, setGameLoading] = useState(true);
   const [hasSave, setHasSave] = useState(false);
   const firestore = useFirestore();
+
+  // Corrected & Hardened: Encapsulate save logic into a debounced function.
+  // This prevents excessive writes by only saving after a period of inactivity (1.5s).
+  const debouncedSave = useCallback(debounce((saveState: any) => {
+    if (user && firestore && gameState === "playing") {
+        const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+        setDocumentNonBlocking(checkpointRef, saveState, { merge: true });
+    }
+  }, 1500), [user, firestore, gameState]);
+
 
   const startGame = useCallback((flags: StoryFlags = new Set()) => {
     setResources({
@@ -85,8 +107,12 @@ export const useGame = (user: User | null) => {
       const docSnap = await getDoc(checkpointRef);
       if (docSnap.exists()) {
         const savedState = docSnap.data();
+        
+        // Corrected & Hardened: Reconstruct the deck from IDs instead of storing the whole object.
+        const loadedDeck = savedState.deckIds.map((id: number) => gameCards.find(c => c.id === id)).filter(Boolean);
+        
         setResources(savedState.resources);
-        setDeck(savedState.deck);
+        setDeck(loadedDeck);
         setCurrentCardIndex(savedState.currentCardIndex);
         setYear(savedState.year);
         setStoryFlags(storyFlagsFromJSON(savedState.storyFlags));
@@ -123,28 +149,30 @@ export const useGame = (user: User | null) => {
         setHasSave(false);
       } finally {
         setGameLoading(false);
-        setGameState('title');
+        if (gameState !== 'playing') {
+            setGameState('title');
+        }
       }
     };
     checkSave();
   }, [user, firestore]);
 
   useEffect(() => {
-    if (user && firestore && gameState === "playing") {
-      const saveState = {
-        userId: user.uid,
-        resources,
-        deck,
-        currentCardIndex,
-        year,
-        storyFlags: storyFlagsToJSON(storyFlags),
-        prescienceCharges,
-        updatedAt: new Date().toISOString(),
-      };
-      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-      setDocumentNonBlocking(checkpointRef, saveState, { merge: true });
-    }
-  }, [user, firestore, gameState, resources, deck, currentCardIndex, year, storyFlags, prescienceCharges]);
+    // Corrected & Hardened: Save a minimal, efficient payload instead of the entire state.
+    // The deck is now stored as an array of card IDs (`deckIds`).
+    const saveState = {
+      userId: user?.uid,
+      resources,
+      deckIds: deck.map(card => card.id),
+      currentCardIndex,
+      year,
+      storyFlags: storyFlagsToJSON(storyFlags),
+      prescienceCharges,
+      updatedAt: new Date().toISOString(),
+    };
+    // Corrected & Hardened: Call the debounced save function.
+    debouncedSave(saveState);
+  }, [resources, deck, currentCardIndex, year, storyFlags, prescienceCharges, user, debouncedSave]);
 
 
   const getNextCard = useCallback(() => {
@@ -303,8 +331,10 @@ export const useGame = (user: User | null) => {
     if (gameOverTrigger) {
       setGameOverMessage(message);
       if (user && firestore) {
+        // Corrected & Hardened: On game over, explicitly delete the checkpoint document.
+        // This is cleaner than adding a 'deletedAt' field and prevents stale data.
         const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-        setDocumentNonBlocking(checkpointRef, { deletedAt: new Date().toISOString() }, { merge: true });
+        deleteDoc(checkpointRef).catch(err => console.error("Failed to delete checkpoint:", err));
       }
 
       if (!storyFlags.has('creator_github_mercy')) {
@@ -349,3 +379,5 @@ export const useGame = (user: User | null) => {
     setStoryFlags,
   };
 };
+
+    
