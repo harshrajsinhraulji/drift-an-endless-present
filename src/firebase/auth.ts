@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
+  signInAnonymously as firebaseSignInAnonymously,
 } from 'firebase/auth';
 import { initializeFirebase } from './';
 
@@ -24,6 +25,10 @@ export const signInWithEmail = (email: string, password: string) => {
 export const signInWithGoogle = () => {
   return signInWithPopup(auth, googleProvider);
 };
+
+export const signInAnonymously = () => {
+  return firebaseSignInAnonymously(auth);
+}
 
 export const signOutUser = () => {
   return signOut(auth);

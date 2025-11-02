@@ -39,8 +39,6 @@ export default function Game() {
   } = useGame(user);
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
-  const [showPrescienceThisTurn, setShowPrescienceThisTurn] = useState(false);
-  const [prescienceWasUsed, setPrescienceWasUsed] = useState(false);
   const { bgmVolume } = useContext(SoundContext);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -62,29 +60,6 @@ export default function Game() {
     }
   }, [gameState, bgmVolume]);
   
-  const handleChoiceWithPrescience = (choice: Choice) => {
-    if (prescienceWasUsed) {
-      setPrescienceWasUsed(false);
-    }
-    setShowPrescienceThisTurn(false);
-    handleChoice(choice);
-  };
-
-  const returnToTitleAndReset = () => {
-    setShowPrescienceThisTurn(false);
-    setPrescienceWasUsed(false);
-    returnToTitle();
-  }
-
-  const togglePrescience = () => {
-    if (prescienceCharges > 0) {
-      if (!showPrescienceThisTurn) {
-        setPrescienceWasUsed(true);
-      }
-      setShowPrescienceThisTurn(!showPrescienceThisTurn);
-    }
-  };
-
   const currentCard = deck[currentCardIndex];
   const cardText = currentCard ? getCardText(currentCard, resources) : "";
   const creatorCard = gameCards.find(c => c.id === 302);
@@ -130,24 +105,24 @@ export default function Game() {
             <NarrativeCard
               key={currentCard.id}
               card={{ ...currentCard, text: cardText}}
-              onChoice={handleChoiceWithPrescience}
-              showPrescience={showPrescienceThisTurn}
+              onChoice={handleChoice}
+              showPrescience={prescienceCharges > 0}
               isFirstTurn={year === 1 && currentCard.id === 0}
             />
         )}
       </div>
       <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || (currentCard?.id === 0 || currentCard?.id === 304) ? 0 : 1}}>{year}</p>
-      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitleAndReset} />
-       <div className="absolute bottom-4 right-4 flex items-center gap-2">
-            {storyFlags.has('creator_linkedin_prescience') && (
-              <Button onClick={togglePrescience} variant={showPrescienceThisTurn ? 'default' : 'outline'} size="sm" className="text-xs font-headline" disabled={prescienceCharges <= 0 && !showPrescienceThisTurn}>
-                <Eye className="w-4 h-4 mr-1" />
-                {prescienceCharges}
-              </Button>
+      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
+       <div className="absolute bottom-4 right-4 flex items-center gap-4">
+            {prescienceCharges > 0 && (
+                <div className="flex items-center gap-2 text-primary/80 animate-pulse">
+                    <Eye className="w-5 h-5" />
+                    <span className="font-headline text-lg">{prescienceCharges}</span>
+                </div>
             )}
-          <Button onClick={() => setIsStoryDialogOpen(true)} variant="outline" size="sm" className="text-xs font-headline">
-            Year: {year}
-          </Button>
+            <Button onClick={() => setIsStoryDialogOpen(true)} variant="outline" size="sm" className="text-xs font-headline">
+                Story
+            </Button>
       </div>
       <StoryProgressDialog isOpen={isStoryDialogOpen} onClose={() => setIsStoryDialogOpen(false)} flags={Array.from(storyFlags)} />
     </div>

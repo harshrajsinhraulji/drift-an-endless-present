@@ -63,14 +63,14 @@ export const useGame = (user: User | null) => {
   const firestore = useFirestore();
 
   const debouncedSave = useCallback(debounce((saveState: any) => {
-    if (user && firestore && gameState === "playing") {
+    if (user && firestore && gameState === "playing" && !user.isAnonymous) {
         const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
         setDocumentNonBlocking(checkpointRef, saveState, { merge: true });
     }
   }, 1500), [user, firestore, gameState]);
 
   const recordScore = useCallback(async (finalYear: number) => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || user.isAnonymous) return;
 
     const leaderboardEntryRef = doc(firestore, 'leaderboards', 'dynasty', 'entries', user.uid);
     const profileRef = doc(firestore, 'users', user.uid);
@@ -96,12 +96,10 @@ export const useGame = (user: User | null) => {
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
-            // Use setDocumentNonBlocking to handle this write operation
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (error) {
         console.error("An error occurred while reading user profile or score:", error);
-        // Let the non-blocking update handler manage permission errors.
     }
 }, [user, firestore]);
 
@@ -114,13 +112,12 @@ export const useGame = (user: User | null) => {
       money: INITIAL_RESOURCE_VALUE,
     });
     
-    // Tutorial cards are now IDs 0, 1, 2
     const tutorialCards = gameCards.filter(c => c.id >= 0 && c.id <= 2).sort((a,b) => a.id - b.id);
     const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
     const flags = useFlags || new Set(storyFlags);
-    // Tutorial is skipped if completed OR if the mercy flag is set (which implies a reload)
+    
     const includeTutorial = !tutorialCompleted && !flags.has('creator_github_mercy');
     
     let initialDeck: CardData[] = [];
@@ -142,7 +139,7 @@ export const useGame = (user: User | null) => {
   }, [tutorialCompleted, storyFlags]);
 
   const deleteSave = useCallback(async () => {
-    if (user && firestore) {
+    if (user && firestore && !user.isAnonymous) {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
@@ -150,11 +147,13 @@ export const useGame = (user: User | null) => {
       } catch (err) {
         console.error("Failed to delete checkpoint:", err);
       }
+    } else {
+        setHasSave(false);
     }
   }, [user, firestore]);
 
   const loadGame = useCallback(async () => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || user.isAnonymous) return;
     setGameLoading(true);
     const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
     try {
@@ -179,7 +178,7 @@ export const useGame = (user: User | null) => {
         setPrescienceCharges(savedState.prescienceCharges || 0);
         setTutorialCompleted(savedState.tutorialCompleted || false);
         setGameState("playing");
-        setHasSave(true); // Ensure save state is true on load
+        setHasSave(true);
         setLastEffects({});
         setGameOverMessage("");
       } else {
@@ -196,7 +195,7 @@ export const useGame = (user: User | null) => {
 
   useEffect(() => {
     const checkSave = async () => {
-      if (!user || !firestore) {
+      if (!user || !firestore || user.isAnonymous) {
         setGameLoading(false);
         setGameState('title');
         setHasSave(false);
@@ -223,7 +222,7 @@ export const useGame = (user: User | null) => {
   }, [user, firestore]);
 
   useEffect(() => {
-    if (gameState !== 'playing' || !user) return;
+    if (gameState !== 'playing' || !user || user.isAnonymous) return;
     const saveState = {
       userId: user.uid,
       resources,
@@ -279,7 +278,7 @@ export const useGame = (user: User | null) => {
             !c.isSpecial && 
             !c.requiredFlags && 
             seenStandardCardIds.has(c.id) &&
-            !(c.id >= 0 && c.id <= 2) // Don't reshuffle tutorial cards
+            !(c.id >= 0 && c.id <= 2)
         );
 
         const newShuffledCards = shuffleArray(reshuffleableCards);
@@ -300,7 +299,6 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       setStoryFlags(newFlags);
-      // Don't reset the game, just return to the playing state
       setGameState("playing"); 
     } else {
       recordScore(year);
@@ -321,10 +319,6 @@ export const useGame = (user: User | null) => {
     const newStoryFlags = new Set(storyFlags);
     if (choice.setFlag) {
       newStoryFlags.add(choice.setFlag);
-      setStoryFlags(newStoryFlags);
-      if (choice.setFlag === 'creator_linkedin_prescience') {
-        setPrescienceCharges(10);
-      }
     }
     
     let newResources = { ...resources };
@@ -340,8 +334,17 @@ export const useGame = (user: User | null) => {
     const isTutorialCard = currentCard.id >= 0 && currentCard.id <= 2;
     const nextYear = !isTutorialCard ? year + 1 : year;
     
+    if (prescienceCharges > 0) {
+      setPrescienceCharges(c => c - 1);
+    }
 
-    if (currentCard.id === 2) { // Last card of the new tutorial
+    if (choice.setFlag === 'creator_linkedin_prescience') {
+      setPrescienceCharges(10);
+    }
+    
+    setStoryFlags(newStoryFlags);
+
+    if (currentCard.id === 2) { 
       setTutorialCompleted(true);
     }
     
@@ -392,6 +395,17 @@ export const useGame = (user: User | null) => {
         return;
       }
     }
+    
+    const plagueChance = user?.isAnonymous ? 0.8 : 0.2;
+    if (newStoryFlags.has('plague_allowed_ship') && !newStoryFlags.has('plague_started') && Math.random() < plagueChance) {
+        const plagueCard = gameCards.find(card => card.id === 104);
+        if (plagueCard) {
+            const newDeck = [...deck];
+            newDeck.splice(currentCardIndex + 1, 0, plagueCard);
+            setDeck(newDeck);
+        }
+    }
+
 
     if (gameOverTrigger) {
       setGameOverMessage(message);
@@ -408,7 +422,7 @@ export const useGame = (user: User | null) => {
        const nextCardIndex = getNextCard();
        if (nextCardIndex !== -1) {
          setCurrentCardIndex(nextCardIndex);
-         setYear(nextYear); // Only update year if the game continues
+         setYear(nextYear);
        } else {
          setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
          recordScore(nextYear);
@@ -416,11 +430,11 @@ export const useGame = (user: User | null) => {
          setGameState("gameover");
        }
     }
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave, recordScore]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave, recordScore, prescienceCharges]);
 
   const returnToTitle = async () => {
+    await deleteSave();
     setGameState("title");
-    await deleteSave(); // Ensure save is deleted before returning to title
     setHasSave(false);
   }
 
@@ -441,8 +455,6 @@ export const useGame = (user: User | null) => {
     handleChoice,
     handleCreatorIntervention,
     returnToTitle,
-    setPrescienceCharges,
-    setStoryFlags,
     deleteSave,
   };
 };

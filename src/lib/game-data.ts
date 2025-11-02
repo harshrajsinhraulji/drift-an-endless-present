@@ -176,7 +176,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Our resources are needed elsewhere.",
-        effects: { people: -5, army: 5 },
+        effects: { people: -5 },
       },
     ],
   },
@@ -192,7 +192,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "We will remain self-sufficient.",
-        effects: { money: -5, army: 5 },
+        effects: { money: -5 },
       },
     ],
   },
@@ -256,7 +256,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Uphold the old ways.",
-        effects: { people: -10, army: 5 },
+        effects: { people: -10 },
       },
     ],
   },
@@ -306,7 +306,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "This is folly. No more funds.",
-        effects: { money: 5, people: -5 },
+        effects: { money: 5 },
       },
     ],
   },
@@ -371,7 +371,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Turn them away.",
-        effects: { money: -5, army: 5 },
+        effects: { money: -5 },
       },
     ],
     blockedByFlags: ["plague_started"]
@@ -408,7 +408,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Show mercy.",
-        effects: { people: 5, army: -5 },
+        effects: { people: 5 },
       },
     ],
     requiredFlags: ["plague_started"],
@@ -443,7 +443,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Heed the priests. Destroy it.",
-        effects: { people: 10, army: -5 },
+        effects: { people: 10 },
       },
     ],
   },
@@ -523,7 +523,7 @@ export const gameCards: CardData[] = [
       },
       {
         text: "Some history is best forgotten.",
-        effects: { people: 10, army: -5 },
+        effects: { people: 10 },
       },
     ],
   },
@@ -619,12 +619,8 @@ export const gameCards: CardData[] = [
     isSpecial: true,
     requiredFlags: ["creator_github_mercy"],
     blockedByFlags: ["creator_mercy_acknowledged"],
-  }
-];
-
-
-export const specialEventCards: CardData[] = [
-    {
+  },
+  {
     id: 101,
     character: "Mysterious Stranger",
     icon: "PersonStanding",
@@ -654,7 +650,7 @@ export const specialEventCards: CardData[] = [
       },
       {
         text: "Destroy it.",
-        effects: { army: -15, people: 10 },
+        effects: { army: -15 },
       },
     ],
     isSpecial: true,
@@ -676,9 +672,13 @@ export const specialEventCards: CardData[] = [
       },
     ],
     isSpecial: true,
-    blockedByFlags: ["plague_started"]
+    requiredFlags: ["plague_allowed_ship"],
+    blockedByFlags: ["plague_started"],
   }
-]
+];
+
+
+export const specialEventCards: CardData[] = []
 
 export const gameOverConditions: Record<string, string> = {
   environment_low: "The land has withered and can no longer sustain your people. Your reign ends in famine.",
@@ -704,9 +704,3 @@ export const storyFlagDescriptions: Record<StoryFlag, string> = {
   plague_cured_by_isolation: "You contained the plague with brutal quarantine measures, at great cost to your people.",
   creator_mercy_acknowledged: "You have acknowledged the Stranger's intervention."
 }
-
-    
-
-    
-
-    
