@@ -69,7 +69,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     if (sfxVolume > 0) {
       const audio = new Audio('/assets/sounds/card.mp3');
       audio.volume = sfxVolume;
-      audio.play().catch(e => console.error("Error playing sound:", e));
+      audio.play().catch(e => {}); // Gracefully handle if sound fails
     }
     setIsAnimatingOut(true);
     // The onChoice will be called after the animation finishes in the handleDragEnd or handleKeyDown
@@ -228,5 +228,3 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
     </div>
   );
 }
-
-    

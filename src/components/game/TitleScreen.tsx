@@ -69,7 +69,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     if (sfxVolume > 0) {
       const audio = new Audio('/assets/sounds/click.mp3');
       audio.volume = sfxVolume;
-      audio.play().catch(e => console.error("Error playing sound:", e));
+      audio.play().catch(e => {}); // Gracefully handle if sound fails
     }
   };
 

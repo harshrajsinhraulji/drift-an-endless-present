@@ -46,11 +46,14 @@ export default function Game() {
      if (!audioRef.current) {
       audioRef.current = new Audio('/assets/sounds/bgm.mp3');
       audioRef.current.loop = true;
+      audioRef.current.addEventListener('error', () => {
+        if(audioRef.current) audioRef.current.src = ""; // Prevent further load attempts
+      });
     }
   }, []);
   
   useEffect(() => {
-    if (audioRef.current) {
+    if (audioRef.current && audioRef.current.src) {
       if (gameState === 'playing' && bgmVolume > 0) {
         audioRef.current.volume = bgmVolume;
         audioRef.current.play().catch(e => {});
