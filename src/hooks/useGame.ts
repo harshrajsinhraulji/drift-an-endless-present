@@ -12,6 +12,8 @@ import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
 import { doc, getDoc, deleteDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
@@ -83,16 +85,26 @@ export const useGame = (user: User | null) => {
       const batch = writeBatch(firestore);
       const achievementsCollectionRef = collection(firestore, 'users', user.uid, 'achievements');
       
+      const achievementData: Record<string, any> = {};
       achievementIds.forEach(id => {
           const achievementRef = doc(achievementsCollectionRef, id);
-          batch.set(achievementRef, {
+          const data = {
               achievementId: id,
               userId: user.uid,
               timestamp: serverTimestamp(),
-          });
+          };
+          batch.set(achievementRef, data);
+          achievementData[id] = data;
       });
       
-      await batch.commit().catch(err => console.error("Failed to award achievements", err));
+      batch.commit().catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: achievementsCollectionRef.path,
+            operation: 'write', // Batch write can be considered a single 'write' operation for context
+            requestResourceData: achievementData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
 
   }, [user, firestore]);
 
@@ -118,10 +130,16 @@ export const useGame = (user: User | null) => {
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
+            // Use non-blocking update for leaderboards as well
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
-    } catch (error) {
-        console.error("An error occurred while trying to record score:", error);
+    } catch (serverError) {
+        // This catch block is for the `getDoc` calls.
+        const permissionError = new FirestorePermissionError({
+            path: `Checking ${profileRef.path} and ${leaderboardEntryRef.path}`,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
   }, [user, firestore]);
 
@@ -163,15 +181,20 @@ export const useGame = (user: User | null) => {
   }, [tutorialCompleted]);
 
   const deleteSave = useCallback(async () => {
-    setHasSave(false);
     if (user && firestore && !user.isAnonymous) {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
-      } catch (err) {
-        console.error("Failed to delete checkpoint:", err);
+        setHasSave(false); 
+      } catch (serverError) {
+         const permissionError = new FirestorePermissionError({
+            path: checkpointRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       }
     }
+     setHasSave(false);
   }, [user, firestore]);
 
   const loadGame = useCallback(async () => {
@@ -212,8 +235,12 @@ export const useGame = (user: User | null) => {
         setHasSave(false);
         startGame();
       }
-    } catch (error) {
-        console.error("Error loading game:", error);
+    } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+            path: checkpointRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
         startGame();
     } finally {
         setGameLoading(false);
@@ -236,7 +263,11 @@ export const useGame = (user: User | null) => {
         setHasSave(saveExists);
         setTutorialCompleted(saveExists ? docSnap.data().tutorialCompleted || false : false);
       } catch (error) {
-        console.error("Error checking for save game:", error);
+        const permissionError = new FirestorePermissionError({
+            path: checkpointRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
         setHasSave(false);
       } finally {
         setGameLoading(false);
@@ -245,7 +276,9 @@ export const useGame = (user: User | null) => {
         }
       }
     };
-    checkSave();
+    if (gameState === 'title') {
+      checkSave();
+    }
   }, [user, firestore, gameState]);
 
   useEffect(() => {
@@ -372,7 +405,7 @@ export const useGame = (user: User | null) => {
         if(nextCardInYearCount >= cardsPerYear) {
             nextYear = year + 1;
             nextCardInYearCount = 0;
-            setCardsPerYear(getRandomInt(2, 5));
+            setCardsPerYear(getRandomInt(2,5));
         }
     }
 
@@ -463,8 +496,8 @@ export const useGame = (user: User | null) => {
     }
 
     if (gameOverTrigger) {
-      setYear(nextYear);
       setGameOverMessage(message);
+      setYear(nextYear);
 
       if (endFlag) achievementsToAward.push(endFlag);
       if (nextYear >= 100) achievementsToAward.push('centenarian');
@@ -487,10 +520,11 @@ export const useGame = (user: User | null) => {
     } 
     
     setStoryFlags(newStoryFlags);
+    setYear(nextYear);
+
     const nextCardIndex = getNextCard();
     if (nextCardIndex !== -1) {
       setCurrentCardIndex(nextCardIndex);
-      setYear(nextYear);
     } else {
       setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
       recordScore(nextYear);
@@ -527,4 +561,6 @@ export const useGame = (user: User | null) => {
 };
 
     
+    
+
     
