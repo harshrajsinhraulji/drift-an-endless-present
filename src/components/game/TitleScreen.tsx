@@ -14,15 +14,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { User } from "firebase/auth";
-import { useFirestore } from "@/firebase";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase";
+import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
 import LeaderboardsDialog from "./LeaderboardsDialog";
 
 interface TitleScreenProps {
   onStart: () => void;
   onContinue: () => void;
   hasSave: boolean;
-  user: User | null;
   onDeleteSave: () => Promise<void>;
 }
 
@@ -48,7 +47,8 @@ const getAuthErrorMessage = (errorCode: string): string => {
     }
 }
 
-export default function TitleScreen({ onStart, onContinue, hasSave, user, onDeleteSave }: TitleScreenProps) {
+export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave }: TitleScreenProps) {
+  const { user } = useUser();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLeaderboardsOpen, setIsLeaderboardsOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -77,6 +77,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
           setUsernameModalOpen(true);
         }
       } else {
+        // Corrected: If profile doesn't exist, create it. This is a crucial fallback.
         const newProfileData: UserProfile = {
           id: user.uid,
           email: user.email || '',
@@ -169,7 +170,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
                   Continue Your Reign
                 </Button>
                 <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-64 font-headline text-xl">
-                  Begin Anew
+                  Begin a New Reign
                 </Button>
               </div>
             ) : (
@@ -241,7 +242,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
                 </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>View the Legends of the Realm.</p>
+              <p>View the Legends of the Realm</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -252,7 +253,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Adjust game settings.</p>
+              <p>Adjust game settings</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -263,7 +264,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
         <Dialog open={isNewGameConfirmOpen} onOpenChange={setNewGameConfirmOpen}>
           <DialogContent>
               <DialogHeader>
-                  <DialogTitle className="font-headline text-2xl text-primary text-center">Begin Anew?</DialogTitle>
+                  <DialogTitle className="font-headline text-2xl text-primary text-center">Begin a New Reign?</DialogTitle>
                   <DialogDescription className="text-lg text-foreground/80 pt-4 text-center">
                       Starting a new reign will cause your past life to be lost to the sands of time. This history cannot be restored.
                   </DialogDescription>
@@ -280,7 +281,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
             <DialogHeader>
               <DialogTitle className="font-headline text-2xl text-primary text-center">What is your name, Ruler?</DialogTitle>
               <DialogDescription className="text-lg text-foreground/80 pt-4 text-center">
-                Your people must know what to call you. This name will be etched into the leaderboards for all of eternity.
+                Your people must know what to call you. This name will be etched into the leaderboards for all eternity.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2 pt-4">

@@ -34,7 +34,7 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
         return query(
             collection(firestore, 'leaderboards', leaderboardId, 'entries'),
             orderBy('score', 'desc'),
-            limit(5) // Corrected: Increased limit to 5 for a slightly more comprehensive list.
+            limit(3) // Corrected: Reduced limit to 3 for a more minimalist "top 3" display.
         );
     }, [firestore, leaderboardId]);
 
