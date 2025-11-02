@@ -43,7 +43,7 @@ export default function Game() {
     handleCreatorIntervention,
     returnToTitle,
     deleteSave,
-  } = useGame(user, hasSave, setHasSave);
+  } = useGame(user, setHasSave);
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const { bgmVolume } = useContext(SoundContext);
@@ -88,7 +88,8 @@ export default function Game() {
   
   useEffect(() => {
     if (audioRef.current && audioRef.current.src) {
-      if (gameState === 'playing' && bgmVolume > 0) {
+      const shouldPlayBGM = (gameState === 'playing' || gameState === 'title' || gameState === 'creator_intervention') && bgmVolume > 0;
+      if (shouldPlayBGM) {
         audioRef.current.volume = bgmVolume;
         audioRef.current.play().catch(e => {});
       } else {

@@ -598,6 +598,7 @@ export const gameCards: CardData[] = [
       },
     ],
     isSpecial: true,
+    requiredFlags: ["creator_github_mercy"],
   },
   {
     id: 304,
