@@ -166,14 +166,7 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
 
   return (
     <div 
-        className="w-full h-[470px] relative cursor-grab active:cursor-grabbing group select-none"
-        onMouseDown={(e) => handleDragStart(e.clientX)}
-        onMouseMove={(e) => handleDragMove(e.clientX)}
-        onMouseUp={handleDragEnd}
-        onMouseLeave={handleDragEnd}
-        onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-        onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
-        onTouchEnd={handleDragEnd}
+        className="w-full h-[470px] relative select-none group"
     >
       
       {isFirstTurn && (
@@ -189,14 +182,26 @@ export default function NarrativeCard({ card, onChoice, showPrescience, isFirstT
         ref={cardRef} 
         style={{...cardStyle, opacity: cardOpacity}}
         className={cn(
-          "w-full h-full absolute animate-in fade-in-0 zoom-in-95 duration-300 group-hover:scale-105",
-          isCreatorCard 
-            ? "group-hover:[filter:drop-shadow(0_0_15px_hsl(var(--foreground)/0.8))]"
-            : "group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]",
-          isDragging ? "" : "transition-transform",
+          "w-full h-full absolute animate-in fade-in-0 zoom-in-95 duration-300",
         )}
       >
-        <Card className="w-full h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col">
+        <Card 
+          className={cn(
+            "w-full h-full mx-auto overflow-hidden rounded-lg shadow-lg border-primary/20 bg-card backdrop-blur-sm flex flex-col cursor-grab active:cursor-grabbing",
+            "group-hover:scale-105 transition-transform", // Corrected: Moved hover effect here
+            isCreatorCard 
+              ? "group-hover:[filter:drop-shadow(0_0_15px_hsl(var(--foreground)/0.8))]"
+              : "group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--primary)/0.5))]"
+          )}
+          // Corrected: Moved mouse/touch handlers to the scaling element to prevent flicker
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseMove={(e) => handleDragMove(e.clientX)}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+          onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
+          onTouchEnd={handleDragEnd}
+        >
           <div className="relative h-24 w-full">
             <div className="absolute inset-0 bg-gradient-to-b from-card via-card/80 to-transparent z-10" />
           </div>
