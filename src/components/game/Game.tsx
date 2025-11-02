@@ -323,6 +323,18 @@ export default function Game() {
             }
         }
     }
+    
+    // Mercy mechanic for low resources
+    const isAnyResourceLow = Object.values(newResources).some(v => v > 0 && v < 15);
+    if (!gameOverTrigger && isAnyResourceLow && Math.random() < 0.25 && !deck.some(c => c.id === 50)) {
+        const mercyCard = gameCards.find(c => c.id === 50);
+        if (mercyCard) {
+            const newDeck = [...deck];
+            newDeck.splice(currentCardIndex + 1, 0, mercyCard);
+            setDeck(newDeck);
+        }
+    }
+
 
     if (year > 10 && !storyFlags.has('creator_linkedin_prescience') && !deck.some(c => c.id === 303) && Math.random() < 0.2) {
       const creatorCard = gameCards.find(c => c.id === 303);

@@ -415,6 +415,23 @@ export const gameCards: CardData[] = [
     ],
   },
   {
+    id: 50,
+    character: "Mysterious Stranger",
+    icon: "Wand",
+    text: "You seem to be having a difficult time, ruler. Do you enjoy this world I have crafted?",
+    isSpecial: true,
+    choices: [
+      {
+        text: "Yes, it is a worthy challenge.",
+        effects: { people: 15, environment: 15, army: 15, money: 15 },
+      },
+      {
+        text: "I am struggling.",
+        effects: { people: 25 },
+      },
+    ],
+  },
+  {
     id: 201,
     character: "Lead Astronomer",
     icon: "Sparkles",
@@ -433,18 +450,18 @@ export const gameCards: CardData[] = [
   },
   {
     id: 302,
-    character: "Harshrajsinh Raulji",
+    character: "Mysterious Stranger",
     icon: "Github",
-    text: "Your reign is... faltering. I am the Creator of this world. Follow my work on GitHub, and I shall grant you a second chance.",
+    text: "Your reign is... faltering. I am the architect of this endless world. If you wish to continue, you must place your faith in me. Will you accept my help?",
     choices: [
       {
-        text: "Open GitHub & accept.",
+        text: "Yes, I will accept.",
         effects: {},
         setFlag: "creator_github_mercy",
         action: () => window.open('https://github.com/harshrajsinhraulji', '_blank'),
       },
       {
-        text: "I refuse your help.",
+        text: "I will face my fate alone.",
         effects: {},
       },
     ],
@@ -452,18 +469,18 @@ export const gameCards: CardData[] = [
   },
   {
     id: 303,
-    character: "Harshrajsinh Raulji",
+    character: "Mysterious Stranger",
     icon: "Linkedin",
-    text: "We meet again. Your progress is impressive. As a reward, connect with me on LinkedIn and I will grant you foresight for a decade.",
+    text: "We meet again. Your progress is impressive. As a reward, accept this gift, and I will grant you foresight for a decade.",
     choices: [
       {
-        text: "Open LinkedIn & accept.",
+        text: "Accept the gift.",
         effects: {},
         setFlag: "creator_linkedin_prescience",
         action: () => window.open('https://www.linkedin.com/in/harshrajsinhraulji', '_blank'),
       },
       {
-        text: "I need no such gift.",
+        text: "I need no such help.",
         effects: { people: -5 },
       },
     ],
@@ -471,9 +488,9 @@ export const gameCards: CardData[] = [
   },
   {
     id: 304,
-    character: "Harshrajsinh Raulji",
-    icon: "Github",
-    text: "Thank you for your support! As promised, your reign is restored. A small tip: balance is key. Extremes in any resource will lead to your downfall.",
+    character: "Mysterious Stranger",
+    icon: "Smile",
+    text: "A wise choice. Your reign is restored. A small tip: balance is key. Extremes in any resource will lead to your downfall.",
     choices: [
         {
             text: "I will remember.",
@@ -566,13 +583,13 @@ export const gameOverConditions: Record<string, string> = {
 export const storyFlagDescriptions: Record<StoryFlag, string> = {
   studied_star: "You chose to study the fallen star, unlocking cosmic secrets.",
   met_astronomer: "You have consulted with the royal astronomers.",
-  creator_github_mercy: "The Creator, Harshrajsinh Raulji, granted you a second chance.",
-  creator_linkedin_prescience: "The Creator, Harshrajsinh Raulji, gave you the gift of foresight.",
+  creator_github_mercy: "The Mysterious Stranger, architect of this world, granted you a second chance.",
+  creator_linkedin_prescience: "The Mysterious Stranger, architect of this world, gave you the gift of foresight.",
   plague_allowed_ship: "You allowed a suspicious ship to dock, bringing wealth and risk.",
   plague_started: "A dreadful plague has begun to spread through your kingdom.",
   plague_cured_by_sacrifice: "You sacrificed the health of your rivers to find a cure for the plague.",
   plague_cured_by_isolation: "You contained the plague with brutal quarantine measures, at great cost to your people.",
-  creator_mercy_acknowledged: "You have acknowledged the Creator's intervention."
+  creator_mercy_acknowledged: "You have acknowledged the Stranger's intervention."
 }
 
     
