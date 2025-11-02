@@ -31,21 +31,18 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
 
     const leaderboardQuery = useMemo(() => {
         if (!firestore) return null;
-        // Corrected & Hardened: This query now ONLY fetches the top 3 entries.
-        // It no longer attempts to fetch all documents to calculate a user's rank on the client.
-        // Calculating user rank should be done with a server-side function for efficiency.
         return query(
             collection(firestore, 'leaderboards', leaderboardId, 'entries'),
             orderBy('score', 'desc'),
-            limit(3)
+            limit(5) // Corrected: Increased limit to 5 for a slightly more comprehensive list.
         );
     }, [firestore, leaderboardId]);
 
     const { data: topEntries, isLoading } = useCollection<LeaderboardEntryType>(leaderboardQuery);
 
     return (
-        <div className="space-y-3">
-            <h4 className="font-headline text-primary text-lg flex items-center gap-2">
+        <div className="space-y-4">
+            <h4 className="font-headline text-primary text-xl flex items-center gap-2">
                 <Icon className="w-5 h-5" />
                 {title}
             </h4>
@@ -54,7 +51,7 @@ export default function LeaderboardDisplay({ leaderboardId, title, icon: Icon, u
                     <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
                 </div>
             ) : topEntries && topEntries.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {topEntries.map((entry, index) => (
                         <LeaderboardEntry 
                             key={entry.id}

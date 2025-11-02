@@ -1,11 +1,10 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import SettingsDialog from "./SettingsDialog";
-import { Cog, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Cog, LogOut, Trophy } from "lucide-react";
 import { signInWithGoogle, signOutUser, signUpWithEmail, signInWithEmail } from "@/firebase/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { User } from "firebase/auth";
 import { useFirestore } from "@/firebase";
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
-import type { LeaderboardEntry as LeaderboardEntryType } from "@/lib/leaderboard-data";
-import { leaderboards } from "@/lib/leaderboard-data";
-import LeaderboardDisplay from "./LeaderboardDisplay";
-import { useGame } from "@/hooks/useGame";
+import LeaderboardsDialog from "./LeaderboardsDialog";
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -54,6 +50,7 @@ const getAuthErrorMessage = (errorCode: string): string => {
 
 export default function TitleScreen({ onStart, onContinue, hasSave, user, onDeleteSave }: TitleScreenProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLeaderboardsOpen, setIsLeaderboardsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -143,6 +140,22 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
               <div className="absolute inset-16 border-[1px] border-primary/5 rounded-full animate-spin-slow"></div>
           </div>
         </div>
+        
+        {user && userProfile && (
+           <div className="absolute top-4 right-4 z-20 flex items-center gap-4 text-foreground/80">
+              <span>{userProfile.username || user.email}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={() => handleAuthAction(signOutUser)} variant="ghost" size="icon">
+                    <LogOut className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Abdicate (Sign Out)</p>
+                </TooltipContent>
+              </Tooltip>
+           </div>
+        )}
 
         <div className="z-10 flex flex-col items-center justify-center w-full flex-grow">
             <div className="flex flex-col items-center gap-2 mb-16 text-center">
@@ -151,82 +164,13 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
             </div>
             
             {user && userProfile ? (
-              <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
-                  <div className="lg:col-span-1 space-y-8">
-                      <Card className="bg-card/50 backdrop-blur-sm">
-                          <CardHeader>
-                              <CardTitle className="flex justify-between items-center">
-                                <span>Welcome, Ruler</span>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button onClick={() => handleAuthAction(signOutUser)} variant="ghost" size="icon">
-                                      <LogOut className="w-5 h-5" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Abdicate (Sign Out)</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </CardTitle>
-                              <CardDescription>{userProfile.username || user.email}</CardDescription>
-                          </CardHeader>
-                      </Card>
-                      <Card className="bg-card/50 backdrop-blur-sm">
-                        <CardHeader>
-                          <CardTitle>The Royal Chronicles</CardTitle>
-                          <CardDescription>
-                            Your journey is written in the stars.
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 gap-6">
-                           <div className="flex flex-col items-center">
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button onClick={onContinue} size="lg" className="w-full font-headline text-xl" disabled={!hasSave}>
-                                    Continue Your Reign
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Load your last checkpoint.</p>
-                                </TooltipContent>
-                            </Tooltip>
-                             <p className="text-sm text-primary-foreground/70 mt-2 font-body">A past life awaits.</p>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-full font-headline text-xl">
-                                    Begin Anew
-                                </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                <p>Start a new game. This will erase any prior save.</p>
-                                </TooltipContent>
-                            </Tooltip>
-                            <p className="text-sm text-foreground/70 mt-2 font-body">Forge a new destiny.</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  </div>
-                  <div className="lg:col-span-2 space-y-8">
-                    <Card className="bg-card/50 backdrop-blur-sm h-full">
-                      <CardHeader>
-                        <CardTitle>Legends of the Realm</CardTitle>
-                        <CardDescription>The histories of rulers, past and present.</CardDescription>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {leaderboards.map(lb => (
-                          <LeaderboardDisplay 
-                            key={lb.id} 
-                            leaderboardId={lb.id} 
-                            title={lb.name} 
-                            icon={lb.icon} 
-                            userProfile={userProfile} 
-                          />
-                        ))}
-                      </CardContent>
-                    </Card>
-                  </div>
+              <div className="flex flex-col items-center gap-6">
+                <Button onClick={onContinue} size="lg" className="w-64 font-headline text-xl" disabled={!hasSave}>
+                  Continue Your Reign
+                </Button>
+                <Button onClick={handleNewGameClick} size="lg" variant="outline" className="w-64 font-headline text-xl">
+                  Begin Anew
+                </Button>
               </div>
             ) : (
               <Tabs defaultValue="signin" className="w-full max-w-sm">
@@ -288,7 +232,18 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
             )}
         </div>
         
-        <div className="w-full flex justify-center items-center gap-6 z-10 py-4">
+        <div className="absolute bottom-4 flex justify-center items-center gap-6 z-10 py-4">
+          <Tooltip>
+            <TooltipTrigger asChild>
+                <Button onClick={() => setIsLeaderboardsOpen(true)} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary" disabled={!userProfile}>
+                    <Trophy className="w-6 h-6" />
+                    <span className="sr-only">Leaderboards</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View the Legends of the Realm.</p>
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => setIsSettingsOpen(true)} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary">
@@ -303,6 +258,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user, onDele
         </div>
 
         <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        <LeaderboardsDialog isOpen={isLeaderboardsOpen} onClose={() => setIsLeaderboardsOpen(false)} userProfile={userProfile} />
 
         <Dialog open={isNewGameConfirmOpen} onOpenChange={setNewGameConfirmOpen}>
           <DialogContent>
