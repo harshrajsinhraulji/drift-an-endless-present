@@ -163,16 +163,14 @@ export const useGame = (user: User | null) => {
   }, [tutorialCompleted]);
 
   const deleteSave = useCallback(async () => {
+    setHasSave(false);
     if (user && firestore && !user.isAnonymous) {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
-        setHasSave(false); // Immediately update state
       } catch (err) {
         console.error("Failed to delete checkpoint:", err);
       }
-    } else {
-        setHasSave(false);
     }
   }, [user, firestore]);
 
@@ -274,25 +272,20 @@ export const useGame = (user: User | null) => {
     let newDeck = [...deck];
 
     const findNextValidCardIndex = (startIndex: number, currentDeck: CardData[]) => {
-        let i = startIndex;
-        while (i < currentDeck.length) {
+        for (let i = startIndex; i < currentDeck.length; i++) {
             const card = currentDeck[i];
-            if (!card) return -1;
-            const isBlocked = card.blockedByFlags?.some(flag => storyFlags.has(flag));
-            if (!isBlocked) {
+            if (card && !card.blockedByFlags?.some(flag => storyFlags.has(flag))) {
                 return i;
             }
-            i++;
         }
         return -1;
     };
     
-    const isInjectable = (card: CardData) => 
+    const storyCardsToInject = gameCards.filter(card => 
         !deck.some(dCard => dCard.id === card.id) &&
         card.requiredFlags?.every(flag => storyFlags.has(flag)) &&
-        !card.blockedByFlags?.some(flag => storyFlags.has(flag));
-        
-    const storyCardsToInject = gameCards.filter(isInjectable);
+        !card.blockedByFlags?.some(flag => storyFlags.has(flag))
+    );
 
     if (storyCardsToInject.length > 0) {
         newDeck.splice(nextIndex, 0, ...storyCardsToInject);
@@ -304,7 +297,7 @@ export const useGame = (user: User | null) => {
     let validNextIndex = findNextValidCardIndex(nextIndex, newDeck);
     
     if (validNextIndex === -1) {
-        const seenStandardCardIds = new Set(deck.slice(0, nextIndex).map(c => c.id));
+        const seenStandardCardIds = new Set(newDeck.slice(0, nextIndex).map(c => c.id));
         const reshuffleableCards = gameCards.filter(c => 
             !c.isSpecial && 
             !c.requiredFlags && 
@@ -320,7 +313,7 @@ export const useGame = (user: User | null) => {
         validNextIndex = findNextValidCardIndex(nextIndex, reshuffledDeck);
     }
 
-    return validNextIndex;
+    return validNextIndex !== -1 ? validNextIndex : -1;
   }, [currentCardIndex, deck, storyFlags]);
 
   const handleCreatorIntervention = useCallback((choice: Choice) => {
@@ -395,7 +388,7 @@ export const useGame = (user: User | null) => {
       achievementsToAward.push('gift_of_foresight');
     }
     
-    if (currentCard.id === 2) { 
+    if (currentCard.id === 2 && !tutorialCompleted) { 
       setTutorialCompleted(true);
     }
     
@@ -504,12 +497,11 @@ export const useGame = (user: User | null) => {
          setGameState("gameover");
        }
     }
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges, tutorialCompleted]);
 
   const returnToTitle = useCallback(async () => {
-    await deleteSave();
     setGameState("title");
-    setHasSave(false);
+    await deleteSave();
   },[deleteSave]);
 
   return {
@@ -532,3 +524,5 @@ export const useGame = (user: User | null) => {
     deleteSave,
   };
 };
+
+    
