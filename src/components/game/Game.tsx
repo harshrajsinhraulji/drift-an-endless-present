@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import type { Choice } from "@/lib/game-data";
 import { gameCards, getCardText } from "@/lib/game-data";
 import ResourceDisplay from "./ResourceDisplay";
@@ -9,6 +9,7 @@ import NarrativeCard from "./NarrativeCard";
 import GameOverDialog from "./GameOverDialog";
 import TitleScreen from "./TitleScreen";
 import StoryProgressDialog from "./StoryProgressDialog";
+import HistoryDialog from "./HistoryDialog";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Eye } from "lucide-react";
@@ -39,6 +40,7 @@ export default function Game() {
     prescienceCharges,
     isGameLoading,
     gameOverCause,
+    gameHistory,
     startGame,
     loadGame,
     handleChoice,
@@ -49,6 +51,7 @@ export default function Game() {
 
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const { bgmVolume } = useContext(SoundContext);
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
   const endAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -172,7 +175,13 @@ export default function Game() {
         message={gameOverMessage} 
         onRestart={returnToTitle} 
         year={year} 
-        cause={gameOverCause} 
+        cause={gameOverCause}
+        onShowHistory={() => setIsHistoryDialogOpen(true)}
+       />
+       <HistoryDialog 
+        isOpen={isHistoryDialogOpen}
+        onClose={() => setIsHistoryDialogOpen(false)}
+        history={gameHistory}
        />
        <div className="absolute bottom-4 right-4 flex items-center gap-4">
             {prescienceCharges > 0 && (

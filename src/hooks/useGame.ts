@@ -6,6 +6,7 @@ import {
   gameCards,
   INITIAL_RESOURCE_VALUE,
   gameOverConditions,
+  getCardText,
 } from '@/lib/game-data';
 import { allAchievements, type AchievementId } from '@/lib/achievements-data';
 import type { User } from 'firebase/auth';
@@ -19,6 +20,12 @@ import { useCheckpoint, type Checkpoint } from './useCheckpoint';
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
 export type StoryFlags = Set<StoryFlag>;
+export interface GameHistoryEvent {
+  year: number;
+  card: CardData;
+  choice: Choice;
+  text: string;
+}
 
 interface useGameProps {
   user: User | null;
@@ -61,6 +68,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
   const [isGameLoading, setGameLoading] = useState(false);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
   const [gameOverCause, setGameOverCause] = useState<ResourceId | 'star' | null>(null);
+  const [gameHistory, setGameHistory] = useState<GameHistoryEvent[]>([]);
   
   const [cardsPerYear, setCardsPerYear] = useState(getRandomInt(2, 5));
   const [cardInYearCount, setCardInYearCount] = useState(0);
@@ -180,6 +188,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     setStoryFlags(flags);
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
     setTutorialCompleted(isTutorialCompleted);
+    setGameHistory([]);
     setGameLoading(false);
   }, []);
 
@@ -196,6 +205,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     setStoryFlags(storyFlagsFromJSON(checkpoint.storyFlags));
     setPrescienceCharges(checkpoint.prescienceCharges || 0);
     setTutorialCompleted(checkpoint.tutorialCompleted || false);
+    setGameHistory(checkpoint.gameHistory || []);
     setGameState("playing");
     setLastEffects({});
     setGameOverMessage("");
@@ -216,10 +226,11 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
       storyFlags: storyFlagsToJSON(storyFlags),
       prescienceCharges,
       tutorialCompleted,
+      gameHistory,
       updatedAt: new Date().toISOString(),
     };
     saveCheckpoint(saveState);
-  }, [resources, deck, currentCardIndex, year, cardInYearCount, cardsPerYear, storyFlags, prescienceCharges, tutorialCompleted, user, saveCheckpoint, gameState]);
+  }, [resources, deck, currentCardIndex, year, cardInYearCount, cardsPerYear, storyFlags, prescienceCharges, tutorialCompleted, gameHistory, user, saveCheckpoint, gameState]);
 
 
   const getNextCard = useCallback(() => {
@@ -300,6 +311,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
       setLastEffects({});
       setGameOverCause(null);
       awardAchievements(['creator_mercy']);
+      setGameHistory([]);
 
     } else {
       recordScore(year);
@@ -318,6 +330,9 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     if (choice.action) choice.action();
 
     setLastEffects(choice.effects);
+    
+    const cardText = getCardText(currentCard, resources);
+    setGameHistory(prev => [...prev, { year, card: currentCard, choice, text: cardText }]);
 
     const newStoryFlags = new Set(storyFlags);
     if (choice.setFlag) {
@@ -476,6 +491,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     gameState,
     gameOverMessage,
     gameOverCause,
+    gameHistory,
     lastEffects,
     year,
     storyFlags,

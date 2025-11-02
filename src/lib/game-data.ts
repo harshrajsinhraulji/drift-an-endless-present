@@ -136,7 +136,15 @@ export const gameCards: CardData[] = [
     id: 5,
     character: "General",
     icon: "Swords",
-    text: "The northern tribes are restless. A show of force will keep them in line, but it may provoke a larger conflict.",
+    text: [
+      {
+        text: "The northern tribes grow bold, Pharaoh. A swift, decisive strike will remind them of our might.",
+        highResource: "army"
+      },
+      {
+        text: "The northern tribes are restless. A show of force will keep them in line, but it may provoke a larger conflict.",
+      }
+    ],
     choices: [
       {
         text: "Send a legion to the border.",
@@ -152,7 +160,19 @@ export const gameCards: CardData[] = [
     id: 6,
     character: "Treasurer",
     icon: "Coins",
-    text: "The royal granaries are overflowing. We can sell the surplus for a great profit, or distribute it to the people to ensure their loyalty.",
+     text: [
+      {
+        text: "The royal granaries are overflowing! We can sell the surplus for a great profit, or distribute it to the adoring populace.",
+        highResource: "environment"
+      },
+      {
+        text: "The harvest was poor. Distributing what little we have will strain our reserves, but selling it may cause unrest.",
+        lowResource: "environment"
+      },
+      {
+        text: "The royal granaries are full. We can sell the surplus for a profit, or distribute it to the people to ensure their loyalty.",
+      }
+    ],
     choices: [
       {
         text: "Sell the surplus.",

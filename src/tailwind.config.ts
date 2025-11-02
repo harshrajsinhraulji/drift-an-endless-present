@@ -97,26 +97,13 @@ export default {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
         },
-        "smoke-in": {
-          "0%": {
-            opacity: "0",
-            transform: "translateY(20px)",
+        "aurora": {
+          from: {
+            backgroundPosition: "50% 50%, 50% 50%",
           },
-          "100%": {
-            opacity: "1",
-            transform: "translateY(0px)",
+          to: {
+            backgroundPosition: "350% 50%, 350% 50%",
           },
-        },
-        "smoke-move": {
-          "0%": {
-            "background-position": "0% 0%",
-          },
-          "50%": {
-            "background-position": "100% 100%",
-          },
-          "100%": {
-            "background-position": "0% 0%",
-          }
         },
       },
       animation: {
@@ -124,8 +111,7 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin-slow 45s linear infinite',
-        "smoke-in": "smoke-in 1s ease-out forwards",
-        "smoke-move": "smoke-move 120s ease-in-out infinite",
+        "aurora": "aurora 60s linear infinite",
       },
     },
   },

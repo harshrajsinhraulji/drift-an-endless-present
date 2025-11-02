@@ -8,7 +8,7 @@ import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { Resources, StoryFlags } from './useGame';
+import type { Resources, StoryFlags, GameHistoryEvent } from './useGame';
 import { storyFlagsFromJSON } from './useGame';
 
 export interface Checkpoint {
@@ -22,6 +22,7 @@ export interface Checkpoint {
     storyFlags: any[]; // Serialized from Set
     prescienceCharges: number;
     tutorialCompleted: boolean;
+    gameHistory: GameHistoryEvent[];
     updatedAt: string;
 }
 

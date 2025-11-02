@@ -12,8 +12,16 @@ import {
 import { Button } from "../ui/button";
 import type { ResourceId } from "@/lib/game-data";
 import { Leaf, Users, Shield, CircleDollarSign, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import type { GameHistoryEvent } from "@/hooks/useGame";
 
+interface GameOverDialogProps {
+  isOpen: boolean;
+  message: string;
+  onRestart: () => void;
+  year: number;
+  cause: ResourceId | 'star' | null;
+  onShowHistory: () => void;
+}
 
 const resourceIcons: Record<ResourceId | 'star', React.ElementType> = {
   environment: Leaf,
@@ -23,16 +31,7 @@ const resourceIcons: Record<ResourceId | 'star', React.ElementType> = {
   star: Star,
 };
 
-
-interface GameOverDialogProps {
-  isOpen: boolean;
-  message: string;
-  onRestart: () => void;
-  year: number;
-  cause: ResourceId | 'star' | null;
-}
-
-export default function GameOverDialog({ isOpen, message, onRestart, year, cause }: GameOverDialogProps) {
+export default function GameOverDialog({ isOpen, message, onRestart, year, cause, onShowHistory }: GameOverDialogProps) {
   const Icon = cause ? resourceIcons[cause] : null;
 
   return (
@@ -50,7 +49,10 @@ export default function GameOverDialog({ isOpen, message, onRestart, year, cause
             {message}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+           <Button onClick={onShowHistory} className="w-full font-headline text-lg" variant="secondary">
+            View Chronicle
+          </Button>
           <Button onClick={onRestart} className="w-full font-headline text-lg" variant="outline">
             Return to Title
           </Button>
