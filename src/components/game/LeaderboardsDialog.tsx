@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { leaderboards } from "@/lib/leaderboard-data";
 import LeaderboardDisplay from "./LeaderboardDisplay";
