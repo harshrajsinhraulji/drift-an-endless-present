@@ -590,11 +590,11 @@ export const gameCards: CardData[] = [
         text: "Accept the gift.",
         effects: {},
         setFlag: "creator_linkedin_prescience",
-        action: () => window.open('https://www.linkedin.com/in/harshrajsinhraulji', '_blank'),
+        action: () => window.open('https://www.linkedin.com/in/harshrajsinhraulji/', '_blank'),
       },
       {
         text: "I need no such help.",
-        effects: { people: -5 },
+        effects: {},
       },
     ],
     isSpecial: true,
