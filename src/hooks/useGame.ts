@@ -71,9 +71,9 @@ export const useGame = (user: User | null) => {
 
   const recordScore = useCallback(async (finalYear: number) => {
     if (!user || !firestore) return;
-    
+
     const leaderboardEntryRef = doc(firestore, 'leaderboards', 'dynasty', 'entries', user.uid);
-    
+
     try {
         const profileRef = doc(firestore, 'users', user.uid);
         const [profileSnap, entrySnap] = await Promise.all([
@@ -91,20 +91,16 @@ export const useGame = (user: User | null) => {
                     score: finalYear,
                     timestamp: serverTimestamp(),
                 };
-                setDoc(leaderboardEntryRef, scoreData, { merge: true }).catch(serverError => {
-                    const permissionError = new FirestorePermissionError({
-                        path: leaderboardEntryRef.path,
-                        operation: 'write',
-                        requestResourceData: scoreData,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                });
+                // Use non-blocking write with centralized error handling
+                setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
             }
         }
     } catch (error) {
-        console.error("Failed to record or check score:", error);
+        // This outer try/catch is for read errors (getDoc), not the write operation.
+        // The write operation's errors are handled by setDocumentNonBlocking.
+        console.error("Failed to read user profile or existing score:", error);
     }
-}, [user, firestore]);
+  }, [user, firestore]);
 
 
   const startGame = useCallback((flags: StoryFlags = new Set()) => {
