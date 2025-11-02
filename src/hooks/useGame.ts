@@ -342,19 +342,34 @@ export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => voi
         army: getRandomInt(25, 45),
         money: getRandomInt(25, 45),
       };
+      setResources(weakenedResources);
       
       // Award the achievement
       awardAchievements(['creator_mercy']);
 
-      // Restart the game from year 0 with the mercy flag set
-      startGame(true, newFlags, weakenedResources);
+      // Instead of restarting, continue the game state from here
+      const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
+      const shuffledMainDeck = shuffleArray(regularCards);
+      const mercyCard = gameCards.find(c => c.id === 304);
+      let newDeck = [];
+      if (mercyCard) {
+        newDeck = [mercyCard, ...shuffledMainDeck];
+      } else {
+        newDeck = shuffledMainDeck;
+      }
+      
+      setDeck(newDeck);
+      setCurrentCardIndex(0);
+      setStoryFlags(newFlags);
+      setGameState("playing");
+      setLastEffects({});
 
     } else {
       recordScore(year);
       deleteSave();
       setGameState("gameover");
     }
-  }, [gameState, storyFlags, year, recordScore, deleteSave, startGame, awardAchievements]);
+  }, [gameState, storyFlags, year, recordScore, deleteSave, awardAchievements]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
