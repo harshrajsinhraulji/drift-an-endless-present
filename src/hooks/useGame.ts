@@ -48,7 +48,7 @@ const getRandomInt = (min: number, max: number) => {
 const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
 const storyFlagsFromJSON = (flags: StoryFlag[] | undefined) => new Set(flags || []);
 
-export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSave: boolean) => void) => {
+export const useGame = (user: User | null, setHasSave: (hasSave: boolean) => void) => {
   const [resources, setResources] = useState<Resources>({
     environment: INITIAL_RESOURCE_VALUE,
     people: INITIAL_RESOURCE_VALUE,
@@ -63,7 +63,7 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
   const [year, setYear] = useState(0);
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
   const [prescienceCharges, setPrescienceCharges] = useState(0);
-  const [isGameLoading, setGameLoading] = useState(true);
+  const [isGameLoading, setGameLoading] = useState(false);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
   
   const [cardsPerYear, setCardsPerYear] = useState(getRandomInt(2, 5));
@@ -96,14 +96,16 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
           achievementData[id] = data;
       });
       
-      batch.commit().catch((serverError) => {
+      try {
+        await batch.commit();
+      } catch (serverError) {
         const permissionError = new FirestorePermissionError({
             path: achievementsCollectionRef.path,
-            operation: 'write', // Batch write can be considered a single 'write' operation for context
+            operation: 'write',
             requestResourceData: achievementData,
         });
         errorEmitter.emit('permission-error', permissionError);
-      });
+      }
 
   }, [user, firestore]);
 
@@ -129,11 +131,9 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
-            // Use non-blocking update for leaderboards as well
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (serverError) {
-        // This catch block is for the `getDoc` calls.
         const permissionError = new FirestorePermissionError({
             path: `Checking ${profileRef.path} and ${leaderboardEntryRef.path}`,
             operation: 'get',
@@ -143,9 +143,9 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
   }, [user, firestore]);
 
 
-  const startGame = useCallback((isTutorialCompleted: boolean, useFlags?: StoryFlags) => {
+  const startGame = useCallback((isTutorialCompleted: boolean, useFlags?: StoryFlags, startResources?: Resources) => {
     setGameLoading(true);
-    setResources({
+    setResources(startResources || {
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
       army: INITIAL_RESOURCE_VALUE,
@@ -165,7 +165,17 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
     if (includeTutorial) {
       initialDeck = [...tutorialCards, ...shuffledMainDeck];
     } else {
-      initialDeck = shuffledMainDeck;
+        // If mercy is given, inject the acknowledgement card.
+        if (flags.has('creator_github_mercy') && !flags.has('creator_mercy_acknowledged')) {
+            const mercyCard = gameCards.find(c => c.id === 304);
+            if(mercyCard) {
+                initialDeck = [mercyCard, ...shuffledMainDeck];
+            } else {
+                initialDeck = shuffledMainDeck;
+            }
+        } else {
+             initialDeck = shuffledMainDeck;
+        }
     }
     
     setDeck(initialDeck);
@@ -317,27 +327,34 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
   }, [currentCardIndex, deck, storyFlags]);
 
   const handleCreatorIntervention = useCallback((choice: Choice) => {
+    if (gameState !== 'creator_intervention') return;
+
     if (choice.action) choice.action();
     
     if (choice.setFlag === 'creator_github_mercy') {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
-      setStoryFlags(newFlags);
+
+      // Reset resources to a weakened state
+      const weakenedResources: Resources = {
+        environment: getRandomInt(25, 45),
+        people: getRandomInt(25, 45),
+        army: getRandomInt(25, 45),
+        money: getRandomInt(25, 45),
+      };
       
-      const card = gameCards.find(c => c.id === 304);
-      if(card) {
-        const newDeck = [...deck];
-        newDeck.splice(currentCardIndex, 0, card);
-        setDeck(newDeck);
-      }
-       setGameState("playing");
+      // Award the achievement
+      awardAchievements(['creator_mercy']);
+
+      // Restart the game from year 0 with the mercy flag set
+      startGame(true, newFlags, weakenedResources);
 
     } else {
       recordScore(year);
       deleteSave();
       setGameState("gameover");
     }
-  }, [storyFlags, year, recordScore, deleteSave, currentCardIndex, deck]);
+  }, [gameState, storyFlags, year, recordScore, deleteSave, startGame, awardAchievements]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -384,7 +401,7 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
       setPrescienceCharges(c => c - 1);
     }
 
-    if (choice.setFlag === 'creator_linkedin_prescience') {
+    if (choice.setFlag === 'creator_linkedin_prescience' && !storyFlags.has('creator_linkedin_prescience')) {
       setPrescienceCharges(10);
       achievementsToAward.push('gift_of_foresight');
     }
@@ -430,9 +447,6 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
         achievementsToAward.push('plague_survivor');
       }
     }
-    if (newStoryFlags.has('creator_github_mercy') && !storyFlags.has('creator_github_mercy')) {
-      achievementsToAward.push('creator_mercy');
-    }
     
     const isAnyResourceLow = Object.values(newResources).some(v => v > 0 && v < 15);
     if (!gameOverTrigger && isAnyResourceLow && Math.random() < 0.25 && !deck.some(c => c.id === 50)) {
@@ -464,7 +478,6 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
     }
 
     if (gameOverTrigger) {
-      setGameOverMessage(message);
       setYear(nextYear);
 
       if (endFlag) achievementsToAward.push(endFlag);
@@ -476,7 +489,8 @@ export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSav
       recordScore(nextYear);
       
       const wasMercyUsed = storyFlags.has('creator_github_mercy');
-
+      
+      setGameOverMessage(message);
       deleteSave();
 
       if (!wasMercyUsed) {
