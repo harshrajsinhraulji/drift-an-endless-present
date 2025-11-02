@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useContext } from "react";
@@ -186,7 +187,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
   const handleAnonymousContinue = async () => {
     await handleAuthAction(signInAnonymously);
     setAnonymousConfirmOpen(false);
-  }
+  };
 
   return (
     <TooltipProvider>
