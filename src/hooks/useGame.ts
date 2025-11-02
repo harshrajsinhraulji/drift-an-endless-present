@@ -248,7 +248,7 @@ export const useGame = (user: User | null) => {
       }
     };
     checkSave();
-  }, [user, firestore]);
+  }, [user, firestore, gameState]);
 
   useEffect(() => {
     if (gameState !== 'playing' || !user || user.isAnonymous) return;
@@ -330,13 +330,21 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       setStoryFlags(newFlags);
-      setGameState("playing");
+      
+      const card = gameCards.find(c => c.id === 304);
+      if(card) {
+        const newDeck = [...deck];
+        newDeck.splice(currentCardIndex, 0, card);
+        setDeck(newDeck);
+      }
+       setGameState("playing");
+
     } else {
       recordScore(year);
       deleteSave();
       setGameState("gameover");
     }
-  }, [storyFlags, year, recordScore, deleteSave]);
+  }, [storyFlags, year, recordScore, deleteSave, currentCardIndex, deck]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -428,6 +436,9 @@ export const useGame = (user: User | null) => {
         achievementsToAward.push('plague_survivor');
       }
     }
+    if (newStoryFlags.has('creator_github_mercy') && !storyFlags.has('creator_github_mercy')) {
+      achievementsToAward.push('creator_mercy');
+    }
     
     const isAnyResourceLow = Object.values(newResources).some(v => v > 0 && v < 15);
     if (!gameOverTrigger && isAnyResourceLow && Math.random() < 0.25 && !deck.some(c => c.id === 50)) {
@@ -448,6 +459,15 @@ export const useGame = (user: User | null) => {
             setDeck(newDeck);
         }
     }
+    
+    if (Math.random() < 0.05 && !storyFlags.has('creator_linkedin_prescience')) {
+        const prescienceCard = gameCards.find(card => card.id === 303);
+        if(prescienceCard) {
+             const newDeck = [...deck];
+            newDeck.splice(currentCardIndex + 1, 0, prescienceCard);
+            setDeck(newDeck);
+        }
+    }
 
     if (gameOverTrigger) {
       setGameOverMessage(message);
@@ -460,9 +480,12 @@ export const useGame = (user: User | null) => {
 
       awardAchievements(achievementsToAward);
       recordScore(nextYear);
+      
+      const wasMercyUsed = storyFlags.has('creator_github_mercy');
+
       deleteSave();
 
-      if (!storyFlags.has('creator_github_mercy')) {
+      if (!wasMercyUsed) {
         setGameState("creator_intervention");
       } else {
         setGameState("gameover");
@@ -483,11 +506,11 @@ export const useGame = (user: User | null) => {
     }
   }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges]);
 
-  const returnToTitle = async () => {
+  const returnToTitle = useCallback(async () => {
     await deleteSave();
     setGameState("title");
     setHasSave(false);
-  }
+  },[deleteSave]);
 
   return {
     resources,
