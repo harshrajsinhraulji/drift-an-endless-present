@@ -29,12 +29,12 @@ export default function Game() {
     storyFlags,
     prescienceCharges,
     isGameLoading,
+    hasSave,
     startGame,
     loadGame,
     handleChoice,
     handleCreatorIntervention,
     returnToTitle,
-    hasSave,
     deleteSave,
   } = useGame(user);
 
@@ -79,7 +79,7 @@ export default function Game() {
     );
   }
 
-  if (!user || gameState === "title") {
+  if (gameState === "title") {
     return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} onDeleteSave={deleteSave} />;
   }
   
@@ -110,12 +110,12 @@ export default function Game() {
               card={{ ...currentCard, text: cardText}}
               onChoice={handleChoice}
               showPrescience={prescienceCharges > 0}
-              isFirstTurn={year === 1 && currentCard.id === 0}
+              isFirstTurn={year === 0 && currentCard.id === 0}
             />
         )}
       </div>
-      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || (currentCard?.id === 0 || currentCard?.id === 304) ? 0 : 1}}>{year}</p>
-      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} />
+      <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || (currentCard?.id === 0 || currentCard?.id === 304) ? 0 : 1}}>Year {year}</p>
+      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} year={year} />
        <div className="absolute bottom-4 right-4 flex items-center gap-4">
             {prescienceCharges > 0 && (
                 <div className="flex items-center gap-2 text-primary/80 animate-pulse">

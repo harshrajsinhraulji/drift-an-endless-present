@@ -96,6 +96,10 @@
           "type": "string",
           "description": "Reference to the User who achieved this score. (Relationship: User 1:N LeaderboardEntry)"
         },
+        "username": {
+          "type": "string",
+          "description": "The display name of the user at the time the score was set."
+        },
         "score": {
           "type": "number",
           "description": "The score achieved by the user on this leaderboard."
@@ -110,6 +114,7 @@
         "id",
         "leaderboardId",
         "userId",
+        "username",
         "score",
         "timestamp"
       ]
@@ -137,6 +142,37 @@
       "required": [
         "id",
         "email"
+      ]
+    },
+    "UserAchievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAchievement",
+      "type": "object",
+      "description": "Represents an achievement unlocked by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the unlocked achievement record."
+        },
+        "achievementId": {
+          "type": "string",
+          "description": "The ID of the unlocked achievement (e.g., 'golden_age')."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who unlocked the achievement."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the achievement was unlocked.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "achievementId",
+        "userId",
+        "timestamp"
       ]
     },
     "Event": {
@@ -242,6 +278,26 @@
             {
               "name": "entryId",
               "description": "The unique identifier of the leaderboard entry."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/users/{userId}/achievements/{achievementId}",
+        "definition": {
+          "entityName": "UserAchievement",
+          "schema": {
+            "$ref": "#/backend/entities/UserAchievement"
+          },
+          "description": "Stores achievements unlocked by a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "achievementId",
+              "description": "The unique identifier for the achievement."
             }
           ]
         }

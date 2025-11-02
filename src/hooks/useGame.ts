@@ -1,24 +1,22 @@
 
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ResourceId, CardData, Choice, StoryFlag } from '@/lib/game-data';
 import {
   gameCards,
   INITIAL_RESOURCE_VALUE,
   gameOverConditions,
 } from '@/lib/game-data';
+import { allAchievements, type AchievementId } from '@/lib/achievements-data';
 import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
-import { doc, getDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export type Resources = Record<ResourceId, number>;
 export type GameState = 'title' | 'playing' | 'gameover' | 'creator_intervention';
 export type StoryFlags = Set<StoryFlag>;
 
-// Debounce function to limit the rate of Firestore writes
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -38,6 +36,12 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   }
   return newArray;
 };
+
+const getRandomInt = (min: number, max: number) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
 const storyFlagsFromJSON = (flags: StoryFlag[] | undefined) => new Set(flags || []);
@@ -60,14 +64,37 @@ export const useGame = (user: User | null) => {
   const [isGameLoading, setGameLoading] = useState(true);
   const [hasSave, setHasSave] = useState(false);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
+  
+  const [cardsPerYear, setCardsPerYear] = useState(getRandomInt(2, 5));
+  const [cardInYearCount, setCardInYearCount] = useState(0);
+
   const firestore = useFirestore();
 
-  const debouncedSave = useCallback(debounce((saveState: any) => {
+  const debouncedSave = useMemo(() => debounce((saveState: any) => {
     if (user && firestore && gameState === "playing" && !user.isAnonymous) {
         const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
         setDocumentNonBlocking(checkpointRef, saveState, { merge: true });
     }
   }, 1500), [user, firestore, gameState]);
+
+  const awardAchievements = useCallback(async (achievementIds: AchievementId[]) => {
+      if (!user || user.isAnonymous || !firestore || achievementIds.length === 0) return;
+      
+      const batch = writeBatch(firestore);
+      const achievementsCollectionRef = collection(firestore, 'users', user.uid, 'achievements');
+      
+      achievementIds.forEach(id => {
+          const achievementRef = doc(achievementsCollectionRef, id);
+          batch.set(achievementRef, {
+              achievementId: id,
+              userId: user.uid,
+              timestamp: serverTimestamp(),
+          });
+      });
+      
+      await batch.commit().catch(err => console.error("Failed to award achievements", err));
+
+  }, [user, firestore]);
 
   const recordScore = useCallback(async (finalYear: number) => {
     if (!user || !firestore || user.isAnonymous) return;
@@ -81,27 +108,24 @@ export const useGame = (user: User | null) => {
             getDoc(leaderboardEntryRef)
         ]);
 
-        if (!profileSnap.exists()) {
-            console.error("User profile does not exist, cannot record score.");
-            return;
-        }
-
+        const username = profileSnap.exists() ? (profileSnap.data().username || 'Anonymous Ruler') : 'Anonymous Ruler';
         const currentScore = entrySnap.exists() ? entrySnap.data().score : 0;
         
         if (finalYear > currentScore) {
-            const username = profileSnap.data().username || 'Anonymous Ruler';
             const scoreData = {
                 userId: user.uid,
                 username: username,
                 score: finalYear,
                 timestamp: serverTimestamp(),
             };
+            // This is a non-blocking update
             setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
         }
     } catch (error) {
-        console.error("An error occurred while reading user profile or score:", error);
+        // This is a non-critical error, so we just log it.
+        console.error("An error occurred while trying to record score:", error);
     }
-}, [user, firestore]);
+  }, [user, firestore]);
 
 
   const startGame = useCallback((useFlags?: StoryFlags) => {
@@ -116,7 +140,7 @@ export const useGame = (user: User | null) => {
     const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
     const shuffledMainDeck = shuffleArray(regularCards);
     
-    const flags = useFlags || new Set(storyFlags);
+    const flags = useFlags || new Set();
     
     const includeTutorial = !tutorialCompleted && !flags.has('creator_github_mercy');
     
@@ -133,10 +157,12 @@ export const useGame = (user: User | null) => {
     setGameState("playing");
     setGameOverMessage("");
     setLastEffects({});
-    setYear(1);
+    setYear(0);
+    setCardInYearCount(0);
+    setCardsPerYear(getRandomInt(2,5));
     setStoryFlags(flags);
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
-  }, [tutorialCompleted, storyFlags]);
+  }, [tutorialCompleted]);
 
   const deleteSave = useCallback(async () => {
     if (user && firestore && !user.isAnonymous) {
@@ -153,7 +179,10 @@ export const useGame = (user: User | null) => {
   }, [user, firestore]);
 
   const loadGame = useCallback(async () => {
-    if (!user || !firestore || user.isAnonymous) return;
+    if (!user || !firestore || user.isAnonymous) {
+        setGameState('title');
+        return;
+    };
     setGameLoading(true);
     const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
     try {
@@ -174,6 +203,8 @@ export const useGame = (user: User | null) => {
         setDeck(loadedDeck);
         setCurrentCardIndex(savedState.currentCardIndex);
         setYear(savedState.year);
+        setCardInYearCount(savedState.cardInYearCount || 0);
+        setCardsPerYear(savedState.cardsPerYear || getRandomInt(2, 5));
         setStoryFlags(storyFlagsFromJSON(savedState.storyFlags));
         setPrescienceCharges(savedState.prescienceCharges || 0);
         setTutorialCompleted(savedState.tutorialCompleted || false);
@@ -195,7 +226,7 @@ export const useGame = (user: User | null) => {
 
   useEffect(() => {
     const checkSave = async () => {
-      if (!user || !firestore || user.isAnonymous) {
+      if (!user || user.isAnonymous || !firestore) {
         setGameLoading(false);
         setGameState('title');
         setHasSave(false);
@@ -229,13 +260,15 @@ export const useGame = (user: User | null) => {
       deckIds: deck.map(card => card.id),
       currentCardIndex,
       year,
+      cardInYearCount,
+      cardsPerYear,
       storyFlags: storyFlagsToJSON(storyFlags),
       prescienceCharges,
       tutorialCompleted,
       updatedAt: new Date().toISOString(),
     };
     debouncedSave(saveState);
-  }, [resources, deck, currentCardIndex, year, storyFlags, prescienceCharges, tutorialCompleted, user, debouncedSave, gameState]);
+  }, [resources, deck, currentCardIndex, year, cardInYearCount, cardsPerYear, storyFlags, prescienceCharges, tutorialCompleted, user, debouncedSave, gameState]);
 
 
   const getNextCard = useCallback(() => {
@@ -299,7 +332,7 @@ export const useGame = (user: User | null) => {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
       setStoryFlags(newFlags);
-      setGameState("playing"); 
+      setGameState("playing");
     } else {
       recordScore(year);
       deleteSave();
@@ -324,6 +357,8 @@ export const useGame = (user: User | null) => {
     let newResources = { ...resources };
     let gameOverTrigger = false;
     let message = "";
+    let endFlag: AchievementId | null = null;
+    let achievementsToAward: AchievementId[] = [];
 
     for (const [resource, effect] of Object.entries(choice.effects)) {
       newResources[resource as ResourceId] = Math.max(0, Math.min(100, newResources[resource as ResourceId] + effect));
@@ -331,8 +366,19 @@ export const useGame = (user: User | null) => {
     
     setResources(newResources);
 
-    const isTutorialCard = currentCard.id >= 0 && currentCard.id <= 2;
-    const nextYear = !isTutorialCard ? year + 1 : year;
+    let nextYear = year;
+    let nextCardInYearCount = cardInYearCount + 1;
+    
+    if (![0,1,2,304].includes(currentCard.id)) {
+        if(nextCardInYearCount >= cardsPerYear) {
+            nextYear = year + 1;
+            nextCardInYearCount = 0;
+            setCardsPerYear(getRandomInt(2, 5));
+        }
+    }
+
+    setCardInYearCount(nextCardInYearCount);
+
     
     if (prescienceCharges > 0) {
       setPrescienceCharges(c => c - 1);
@@ -340,10 +386,9 @@ export const useGame = (user: User | null) => {
 
     if (choice.setFlag === 'creator_linkedin_prescience') {
       setPrescienceCharges(10);
+      achievementsToAward.push('gift_of_foresight');
     }
     
-    setStoryFlags(newStoryFlags);
-
     if (currentCard.id === 2) { 
       setTutorialCompleted(true);
     }
@@ -351,11 +396,13 @@ export const useGame = (user: User | null) => {
     if (currentCard?.id === 201 && choice.text.includes("Embrace")) {
         gameOverTrigger = true;
         message = gameOverConditions.studied_star_ending;
+        endFlag = 'cosmic_merger';
     } else if (nextYear >= 50) {
         const isBalanced = Object.values(newResources).every(v => v > 30 && v < 70);
         if (isBalanced) {
             gameOverTrigger = true;
             message = gameOverConditions.golden_age;
+            endFlag = 'golden_age';
         }
     }
     
@@ -365,14 +412,21 @@ export const useGame = (user: User | null) => {
             if (newResources[resourceId] <= 0) {
                 gameOverTrigger = true;
                 message = gameOverConditions[`${resourceId}_low`];
+                endFlag = `${resourceId}_low` as AchievementId;
                 break;
             }
             if (newResources[resourceId] >= 100) {
                 gameOverTrigger = true;
                 message = gameOverConditions[`${resourceId}_high`];
+                endFlag = `${resourceId}_high` as AchievementId;
                 break;
             }
         }
+    }
+
+    // --- Story-based achievement checks ---
+    if (newStoryFlags.has('plague_cured_by_sacrifice') || newStoryFlags.has('plague_cured_by_isolation')) {
+      achievementsToAward.push('plague_survivor');
     }
     
     const isAnyResourceLow = Object.values(newResources).some(v => v > 0 && v < 15);
@@ -383,17 +437,6 @@ export const useGame = (user: User | null) => {
             newDeck.splice(currentCardIndex + 1, 0, mercyCard);
             setDeck(newDeck);
         }
-    }
-
-    if (year > 10 && !storyFlags.has('creator_linkedin_prescience') && !deck.some(c => c.id === 303) && Math.random() < 0.2) {
-      const creatorCard = gameCards.find(c => c.id === 303);
-      if(creatorCard) {
-        const newDeck = [...deck];
-        newDeck.splice(currentCardIndex + 1, 0, creatorCard);
-        setDeck(newDeck);
-        setCurrentCardIndex(currentCardIndex + 1);
-        return;
-      }
     }
     
     const plagueChance = user?.isAnonymous ? 0.8 : 0.2;
@@ -406,9 +449,16 @@ export const useGame = (user: User | null) => {
         }
     }
 
-
     if (gameOverTrigger) {
       setGameOverMessage(message);
+      setYear(nextYear);
+
+      if (endFlag) achievementsToAward.push(endFlag);
+      if (nextYear >= 100) achievementsToAward.push('centenarian');
+      else if (nextYear >= 50) achievementsToAward.push('half_centenarian');
+      else if (nextYear >= 25) achievementsToAward.push('quarter_centenarian');
+
+      awardAchievements(achievementsToAward);
       recordScore(nextYear);
       deleteSave();
 
@@ -419,6 +469,7 @@ export const useGame = (user: User | null) => {
       }
 
     } else {
+       setStoryFlags(newStoryFlags);
        const nextCardIndex = getNextCard();
        if (nextCardIndex !== -1) {
          setCurrentCardIndex(nextCardIndex);
@@ -430,7 +481,7 @@ export const useGame = (user: User | null) => {
          setGameState("gameover");
        }
     }
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave, recordScore, prescienceCharges]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges]);
 
   const returnToTitle = async () => {
     await deleteSave();

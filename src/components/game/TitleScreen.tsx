@@ -4,7 +4,8 @@
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import SettingsDialog from "./SettingsDialog";
-import { Cog, LogOut, Trophy, Github, Linkedin } from "lucide-react";
+import AchievementsDialog from "./AchievementsDialog";
+import { Cog, LogOut, Trophy, Github, Linkedin, Award } from "lucide-react";
 import { signInWithGoogle, signOutUser, signUpWithEmail, signInWithEmail, signInAnonymously } from "@/firebase/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useFirestore, useUser } from "@/firebase";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { useFirestore, useUser, useCollection } from "@/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import LeaderboardsDialog from "./LeaderboardsDialog";
 import { SoundContext } from "@/contexts/SoundContext";
-
+import type { UserAchievement } from "@/lib/achievements-data";
+import { collection } from "firebase/firestore";
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -52,6 +54,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
   const { user } = useUser();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLeaderboardsOpen, setIsLeaderboardsOpen] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -65,11 +68,14 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
   const firestore = useFirestore();
   const { sfxVolume } = useContext(SoundContext);
 
+  const achievementsQuery = user && !user.isAnonymous && firestore ? collection(firestore, 'users', user.uid, 'achievements') : null;
+  const { data: userAchievements } = useCollection<UserAchievement>(achievementsQuery);
+
   const playClickSound = () => {
     if (sfxVolume > 0) {
       const audio = new Audio('/assets/sounds/click.mp3');
       audio.volume = sfxVolume;
-      audio.play().catch(e => {}); // Gracefully handle if sound fails
+      audio.play().catch(e => {});
     }
   };
 
@@ -79,7 +85,6 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
       return;
     }
 
-    // Anonymous users don't have persistent profiles in the same way
     if (user.isAnonymous) {
       setUserProfile({ id: user.uid, username: 'Wanderer', email: '' });
       setUsernameModalOpen(false);
@@ -87,8 +92,9 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     }
 
     const profileRef = doc(firestore, 'users', user.uid);
-    const unsubscribe = onSnapshot(profileRef, (docSnap) => {
-      if (docSnap.exists()) {
+    
+    getDoc(profileRef).then(docSnap => {
+       if (docSnap.exists()) {
         const profile = docSnap.data() as UserProfile;
         setUserProfile(profile);
         if (!profile.username) {
@@ -98,16 +104,16 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
         const newProfileData: UserProfile = {
           id: user.uid,
           email: user.email || '',
-          username: user.displayName || '',
+          username: user.displayName || user.email?.split('@')[0] || `Ruler-${user.uid.substring(0,4)}`,
         };
         setDoc(profileRef, newProfileData).catch(e => console.error("Failed to create user profile", e));
+        setUserProfile(newProfileData);
         if (!newProfileData.username) {
             setUsernameModalOpen(true);
         }
       }
     });
 
-    return () => unsubscribe();
   }, [user, firestore]);
 
   const handleUsernameSubmit = async () => {
@@ -119,6 +125,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     const profileRef = doc(firestore, 'users', user.uid);
     try {
       await setDoc(profileRef, { username: newUsername.trim() }, { merge: true });
+      setUserProfile(prev => prev ? { ...prev, username: newUsername.trim() } : null);
       setUsernameModalOpen(false);
     } catch (e) {
       setError("Failed to etch the name. Please try again.");
@@ -158,7 +165,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen w-full max-w-7xl flex-col items-center justify-center p-4 sm:p-8">
+      <div className="flex h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative w-96 h-96">
               <div className="absolute inset-0 border-[2px] border-primary/10 rounded-full animate-spin-slow"></div>
@@ -274,6 +281,17 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
         <div className="flex justify-center items-center gap-6 z-10 py-4">
           <Tooltip>
             <TooltipTrigger asChild>
+                <Button onClick={() => { playClickSound(); setIsAchievementsOpen(true); }} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary" disabled={!userProfile || user?.isAnonymous}>
+                    <Award className="w-6 h-6" />
+                    <span className="sr-only">Achievements</span>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View Your Achievements</p>
+            </TooltipContent>
+          </Tooltip>
+           <Tooltip>
+            <TooltipTrigger asChild>
                 <Button onClick={() => { playClickSound(); setIsLeaderboardsOpen(true); }} variant="ghost" size="icon" className="text-foreground/60 hover:text-primary" disabled={!userProfile}>
                     <Trophy className="w-6 h-6" />
                     <span className="sr-only">Leaderboards</span>
@@ -320,6 +338,7 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
 
         <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         <LeaderboardsDialog isOpen={isLeaderboardsOpen} onClose={() => setIsLeaderboardsOpen(false)} userProfile={userProfile} />
+        <AchievementsDialog isOpen={isAchievementsOpen} onClose={() => setIsAchievementsOpen(false)} unlockedAchievements={userAchievements || []} />
 
         <Dialog open={isNewGameConfirmOpen} onOpenChange={setNewGameConfirmOpen}>
           <DialogContent>

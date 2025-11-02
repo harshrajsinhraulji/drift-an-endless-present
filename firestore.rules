@@ -3,18 +3,19 @@
  * @file Firestore Security Rules for CyberNation.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for checkpoints,
+ * This ruleset enforces a strict user-ownership model for checkpoints and achievements,
  * allows authenticated users to create or update their own leaderboard entries,
  * and allows public read access to leaderboards.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profiles, acting as the root for user-owned data.
  * - /users/{userId}/checkpoints/{checkpointId}: Stores checkpoints for each user.
+ * - /users/{userId}/achievements/{achievementId}: Stores unlocked achievements for a user.
  * - /leaderboards/{leaderboardId}: Stores the definition of each leaderboard.
- * - /leaderboards/{leaderboardId}/entries/{entryId}: Stores leaderboard entries for each leaderboard, where entryId is the userId.
+ * - /leaderboards/{leaderboardId}/entries/{userId}: Stores leaderboard entries for each leaderboard, where entryId is the userId.
  *
  * Key Security Decisions:
- * - Users can only manage their own profiles and checkpoints.
+ * - Users can only manage their own profiles, checkpoints, and achievements.
  * - Authenticated users can create or update their own leaderboard entry if the new score is higher.
  * - Leaderboards and leaderboard entries are publicly readable.
  * - User listing is disallowed for privacy.
@@ -57,6 +58,23 @@ service cloud.firestore {
       allow update: if isOwner() && isDocumentOwner(resource.data) && request.resource.data.userId == resource.data.userId;
       allow delete: if isOwner();
     }
+    
+    /**
+     * @description Controls access to a user's unlocked achievements.
+     * @path /users/{userId}/achievements/{achievementId}
+     */
+    match /users/{userId}/achievements/{achievementId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Users can read their own achievements. No public list.
+      allow get, list: if isOwner();
+      // Users can only create achievements for themselves. They cannot be updated or deleted.
+      allow create: if isOwner() && request.resource.data.userId == userId;
+      allow update, delete: if false;
+    }
+
 
     /**
      * @description Controls access to leaderboard documents.

@@ -28,9 +28,10 @@ interface GameOverDialogProps {
   isOpen: boolean;
   message: string;
   onRestart: () => void;
+  year: number;
 }
 
-export default function GameOverDialog({ isOpen, message, onRestart }: GameOverDialogProps) {
+export default function GameOverDialog({ isOpen, message, onRestart, year }: GameOverDialogProps) {
   let iconId: ResourceId | 'star' | null = null;
   if (message.includes("land has withered")) iconId = "environment";
   if (message.includes("Nature has reclaimed")) iconId = "environment";
@@ -54,6 +55,7 @@ export default function GameOverDialog({ isOpen, message, onRestart }: GameOverD
                 </div>
             )}
           <AlertDialogTitle className="font-headline text-2xl text-primary text-center">The End</AlertDialogTitle>
+           <p className="text-center text-muted-foreground font-headline text-lg">You reigned for {year} years.</p>
           <AlertDialogDescription className="text-lg text-foreground/80 pt-4 text-center">
             {message}
           </AlertDialogDescription>
