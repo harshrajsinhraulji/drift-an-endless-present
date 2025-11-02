@@ -74,7 +74,7 @@ export default function Game() {
   
   useEffect(() => {
     if (audioRef.current) {
-      if ((gameState === 'playing' || gameState === 'title') && bgmVolume > 0) {
+      if (gameState === 'playing' && bgmVolume > 0) {
         audioRef.current.volume = bgmVolume;
         audioRef.current.play().catch(e => {});
       } else {
