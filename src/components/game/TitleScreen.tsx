@@ -97,7 +97,8 @@ export default function TitleScreen({ onStart, onContinue, hasSave, user }: Titl
                   {hasSave && (
                     <Button onClick={onContinue} className="w-full font-headline text-xl" size="lg">Continue</Button>
                   )}
-                  <Button onClick={onStart} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
+                  {/* Corrected: Wrapped onStart in an arrow function to prevent passing the event object */}
+                  <Button onClick={() => onStart()} variant={hasSave ? "outline" : "default"} className="w-full font-headline text-xl" size="lg">
                     New Game
                   </Button>
                 </CardContent>
