@@ -28,15 +28,15 @@ service cloud.firestore {
      * @path /users/{userId}
      */
     match /users/{userId} {
-      function isOwner(userId) {
+      function isOwner() {
         return request.auth != null && request.auth.uid == userId;
       }
 
-      allow get: if isOwner(userId);
+      allow get: if isOwner();
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isOwner(userId);
+      allow create: if isOwner() && request.resource.data.id == userId;
+      allow update: if isOwner() && request.resource.data.id == resource.data.id;
+      allow delete: if isOwner();
     }
 
     /**
@@ -44,7 +44,7 @@ service cloud.firestore {
      * @path /users/{userId}/checkpoints/{checkpointId}
      */
     match /users/{userId}/checkpoints/{checkpointId} {
-      function isOwner(userId) {
+      function isOwner() {
         return request.auth != null && request.auth.uid == userId;
       }
 
@@ -52,10 +52,10 @@ service cloud.firestore {
         return request.auth != null && request.auth.uid == doc.userId;
       }
 
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && isDocumentOwner(request.resource.data);
-      allow update: if isOwner(userId) && isDocumentOwner(resource.data) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isOwner(userId);
+      allow get, list: if isOwner();
+      allow create: if isOwner() && isDocumentOwner(request.resource.data);
+      allow update: if isOwner() && isDocumentOwner(resource.data) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isOwner();
     }
 
     /**
@@ -72,14 +72,17 @@ service cloud.firestore {
      * @path /leaderboards/{leaderboardId}/entries/{userId}
      */
     match /leaderboards/{leaderboardId}/entries/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
       allow get, list: if true;
 
       // Allow creating a new entry if the user is authenticated and the entry is for themselves.
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow create: if isOwner();
       
       // Allow updating if the user owns the document and the new score is higher than the old one.
-      allow update: if request.auth != null && request.auth.uid == userId 
-                      && request.resource.data.score > resource.data.score;
+      allow update: if isOwner() && request.resource.data.score > resource.data.score;
                       
       allow delete: if false; // Entries are immutable by default.
     }

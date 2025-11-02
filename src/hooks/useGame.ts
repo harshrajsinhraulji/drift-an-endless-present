@@ -9,7 +9,7 @@ import {
 } from '@/lib/game-data';
 import type { User } from 'firebase/auth';
 import { useFirestore } from '@/firebase';
-import { doc, getDoc, deleteDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -91,13 +91,10 @@ export const useGame = (user: User | null) => {
                     score: finalYear,
                     timestamp: serverTimestamp(),
                 };
-                // Use non-blocking write with centralized error handling
                 setDocumentNonBlocking(leaderboardEntryRef, scoreData, { merge: true });
             }
         }
     } catch (error) {
-        // This outer try/catch is for read errors (getDoc), not the write operation.
-        // The write operation's errors are handled by setDocumentNonBlocking.
         console.error("Failed to read user profile or existing score:", error);
     }
   }, [user, firestore]);
@@ -133,6 +130,18 @@ export const useGame = (user: User | null) => {
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
   }, [tutorialCompleted]);
 
+  const deleteSave = useCallback(async () => {
+    if (user && firestore) {
+      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+      try {
+        await deleteDoc(checkpointRef);
+        setHasSave(false);
+      } catch (err) {
+        console.error("Failed to delete checkpoint:", err);
+      }
+    }
+  }, [user, firestore]);
+
   const loadGame = useCallback(async () => {
     if (!user || !firestore) return;
     setGameLoading(true);
@@ -143,7 +152,8 @@ export const useGame = (user: User | null) => {
         const savedState = docSnap.data();
         
         if (!savedState.deckIds) {
-            console.warn("Old save format detected. Starting a new game.");
+            console.warn("Old save format detected. Deleting and starting new game.");
+            await deleteSave();
             startGame();
             return;
         }
@@ -169,19 +179,7 @@ export const useGame = (user: User | null) => {
     } finally {
         setGameLoading(false);
     }
-  }, [user, firestore, startGame]);
-
-  const deleteSave = useCallback(async () => {
-    if (user && firestore) {
-      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-      try {
-        await deleteDoc(checkpointRef);
-        setHasSave(false);
-      } catch (err) {
-        console.error("Failed to delete checkpoint:", err);
-      }
-    }
-  }, [user, firestore]);
+  }, [user, firestore, startGame, deleteSave]);
 
   useEffect(() => {
     const checkSave = async () => {
@@ -292,19 +290,14 @@ export const useGame = (user: User | null) => {
     if (choice.setFlag === 'creator_github_mercy') {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
-      
-      startGame(newFlags);
-      const thankYouCard = gameCards.find(c => c.id === 304);
-      if (thankYouCard) {
-        setDeck(currentDeck => [thankYouCard, ...currentDeck]);
-        setCurrentCardIndex(0);
-      }
-
+      setStoryFlags(newFlags);
+      setGameState("playing"); // Corrected: Don't restart, just return to the playing state.
     } else {
       recordScore(year);
+      deleteSave(); // Corrected: Delete save on final game over.
       setGameState("gameover");
     }
-  }, [storyFlags, startGame, year, recordScore]);
+  }, [storyFlags, year, recordScore, deleteSave]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
@@ -392,7 +385,7 @@ export const useGame = (user: User | null) => {
     if (gameOverTrigger) {
       setGameOverMessage(message);
       recordScore(nextYear);
-      deleteSave();
+      deleteSave(); // Corrected: Delete the save file when the game ends.
 
       if (!storyFlags.has('creator_github_mercy')) {
         setGameState("creator_intervention");
@@ -407,7 +400,7 @@ export const useGame = (user: User | null) => {
        } else {
          setGameOverMessage("You have seen all that this timeline has to offer. The world fades to dust.");
          recordScore(nextYear);
-         deleteSave();
+         deleteSave(); // Corrected: Delete save file on timeline completion.
          setGameState("gameover");
        }
     }
