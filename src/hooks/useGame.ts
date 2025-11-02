@@ -279,6 +279,7 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
     if (choice.setFlag === 'creator_github_mercy') {
       const newFlags = new Set(storyFlags);
       newFlags.add('creator_github_mercy');
+      setStoryFlags(newFlags);
 
       const weakenedResources: Resources = {
         environment: getRandomInt(25, 45),
@@ -286,16 +287,15 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
         army: getRandomInt(25, 45),
         money: getRandomInt(25, 45),
       };
+      setResources(weakenedResources);
       
       const regularCards = gameCards.filter(c => c.id > 2 && !c.isSpecial);
       const shuffledMainDeck = shuffleArray(regularCards);
       const mercyCard = gameCards.find(c => c.id === 304);
       let newDeck = mercyCard ? [mercyCard, ...shuffledMainDeck] : shuffledMainDeck;
 
-      setResources(weakenedResources);
       setDeck(newDeck);
       setCurrentCardIndex(0);
-      setStoryFlags(newFlags);
       setGameState("playing");
       setLastEffects({});
       setGameOverCause(null);
@@ -418,24 +418,6 @@ export const useGame = ({ user, setHasSave }: useGameProps) => {
         if (plagueCard) {
             const newDeck = [...deck];
             newDeck.splice(currentCardIndex + 1, 0, plagueCard);
-            setDeck(newDeck);
-        }
-    }
-    
-    if (Math.random() < 0.05 && !storyFlags.has('creator_github_mercy')) {
-        const githubCard = gameCards.find(card => card.id === 302);
-        if(githubCard) {
-             const newDeck = [...deck];
-            newDeck.splice(currentCardIndex + 1, 0, githubCard);
-            setDeck(newDeck);
-        }
-    }
-    
-    if (Math.random() < 0.05 && !storyFlags.has('creator_linkedin_prescience')) {
-        const prescienceCard = gameCards.find(card => card.id === 303);
-        if(prescienceCard) {
-             const newDeck = [...deck];
-            newDeck.splice(currentCardIndex + 1, 0, prescienceCard);
             setDeck(newDeck);
         }
     }

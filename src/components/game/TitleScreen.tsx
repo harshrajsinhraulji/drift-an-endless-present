@@ -193,10 +193,11 @@ export default function TitleScreen({ onStart, onContinue, hasSave, onDeleteSave
     <TooltipProvider>
       <div className="flex h-screen w-full flex-col items-center justify-center p-4 sm:p-8">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="relative w-96 h-96">
-              <div className="absolute inset-0 border-[2px] border-primary/10 rounded-full animate-spin-slow"></div>
-              <div className="absolute inset-8 border-[1px] border-primary/10 rounded-full animate-spin-slow [animation-direction:reverse]"></div>
-              <div className="absolute inset-16 border-[1px] border-primary/5 rounded-full animate-spin-slow"></div>
+          <div className="relative w-[500px] h-[500px]">
+              <div className="absolute inset-0 border-[2px] border-primary/10 rounded-full animate-[spin_45s_linear_infinite]"></div>
+              <div className="absolute inset-10 border-[1px] border-primary/10 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
+              <div className="absolute inset-20 border-[1px] border-primary/10 rounded-full animate-[spin_35s_linear_infinite]"></div>
+               <div className="absolute inset-32 border-[1px] border-primary/5 rounded-full animate-[spin_30s_linear_infinite_reverse]"></div>
           </div>
         </div>
         
