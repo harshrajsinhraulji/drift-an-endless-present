@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ResourceId, CardData, Choice, StoryFlag } from '@/lib/game-data';
@@ -351,3 +352,5 @@ export const useGame = () => {
     setStoryFlags,
   };
 };
+
+    
