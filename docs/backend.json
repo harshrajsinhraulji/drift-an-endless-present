@@ -136,7 +136,6 @@
       },
       "required": [
         "id",
-        "username",
         "email"
       ]
     },
@@ -169,7 +168,8 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "anonymous",
+      "google.com"
     ]
   },
   "firestore": {
@@ -250,5 +250,3 @@
     "reasoning": "To support checkpoints and leaderboards in CyberNation, while adhering to Authorization Independence and QAPs, the Firestore structure is designed as follows:\n\n*   **Checkpoints:** Stored under `/users/{userId}/checkpoints/{checkpointId}`. This path-based ownership ensures that only the owning user can access their checkpoints. The `userId` is included within the checkpoint document itself (denormalized), enabling rules to validate ownership without needing to `get()` the parent user document.\n*   **Leaderboards:** Leaderboards are stored in the `/leaderboards/{leaderboardId}` collection. This allows for global management of leaderboards.\n*   **Leaderboard Entries:**  Each entry is stored in `/leaderboards/{leaderboardId}/entries/{entryId}`.  Each `LeaderboardEntry` includes the `userId`, enabling secure listing and filtering of entries by user.  Since listing leaderboard entries must be public, no denormalization is needed.  The structure facilitates queries for top scores within a specific leaderboard without requiring complex rules.\n\nThis design achieves Authorization Independence by denormalizing the `userId` into the `Checkpoint` and `LeaderboardEntry` documents, a key security practice that avoids the need for `get()` calls to parent documents in security rules. It supports QAPs by segregating user-owned data (checkpoints) from global data (leaderboards) and using path-based ownership for checkpoints."
   }
 }
-
-    

@@ -59,8 +59,6 @@ export const useGame = (user: User | null) => {
   const [hasSave, setHasSave] = useState(false);
   const firestore = useFirestore();
 
-  // Corrected & Hardened: Encapsulate save logic into a debounced function.
-  // This prevents excessive writes by only saving after a period of inactivity (1.5s).
   const debouncedSave = useCallback(debounce((saveState: any) => {
     if (user && firestore && gameState === "playing") {
         const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
@@ -108,8 +106,6 @@ export const useGame = (user: User | null) => {
       if (docSnap.exists()) {
         const savedState = docSnap.data();
         
-        // Corrected & Hardened: Add a guard clause to handle old save formats.
-        // If the 'deckIds' field doesn't exist, it's an old save, so we start a new game.
         if (!savedState.deckIds) {
             console.warn("Old save format detected. Starting a new game.");
             startGame();
@@ -138,6 +134,18 @@ export const useGame = (user: User | null) => {
     }
   }, [user, firestore, startGame]);
 
+  const deleteSave = useCallback(async () => {
+    if (user && firestore) {
+      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+      try {
+        await deleteDoc(checkpointRef);
+        setHasSave(false);
+      } catch (err) {
+        console.error("Failed to delete checkpoint:", err);
+      }
+    }
+  }, [user, firestore]);
+
   useEffect(() => {
     const checkSave = async () => {
       if (!user || !firestore) {
@@ -162,7 +170,7 @@ export const useGame = (user: User | null) => {
       }
     };
     checkSave();
-  }, [user, firestore]);
+  }, [user, firestore, gameState]); // Corrected: Added gameState to dependency array
 
   useEffect(() => {
     const saveState = {
@@ -334,10 +342,7 @@ export const useGame = (user: User | null) => {
 
     if (gameOverTrigger) {
       setGameOverMessage(message);
-      if (user && firestore) {
-        const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-        deleteDoc(checkpointRef).catch(err => console.error("Failed to delete checkpoint:", err));
-      }
+      deleteSave();
 
       if (!storyFlags.has('creator_github_mercy')) {
         setGameState("creator_intervention");
@@ -354,7 +359,7 @@ export const useGame = (user: User | null) => {
          setGameState("gameover");
        }
     }
-  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore]);
+  }, [deck, currentCardIndex, gameState, storyFlags, resources, year, getNextCard, user, firestore, deleteSave]);
 
   const returnToTitle = () => {
     setGameState("title");
@@ -379,5 +384,6 @@ export const useGame = (user: User | null) => {
     returnToTitle,
     setPrescienceCharges,
     setStoryFlags,
+    deleteSave,
   };
 };

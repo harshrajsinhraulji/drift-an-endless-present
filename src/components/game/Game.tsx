@@ -35,6 +35,7 @@ export default function Game() {
     handleCreatorIntervention,
     returnToTitle,
     hasSave,
+    deleteSave,
   } = useGame(user);
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
@@ -101,7 +102,7 @@ export default function Game() {
   }
 
   if (!user || gameState === "title") {
-    return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} user={user} />;
+    return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} user={user} onDeleteSave={deleteSave} />;
   }
   
   if (gameState === "creator_intervention" && creatorCard) {
