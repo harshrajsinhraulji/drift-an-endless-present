@@ -219,7 +219,7 @@ export const useGame = (user: User | null) => {
     } else {
       setGameState("gameover");
     }
-  }, [storyFlags, startNewGmae]);
+  }, [storyFlags, startNewGame]);
 
 
   const handleChoice = useCallback((choice: Choice) => {
