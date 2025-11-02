@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import type { Choice } from "@/lib/game-data";
 import { gameCards, getCardText } from "@/lib/game-data";
 import ResourceDisplay from "./ResourceDisplay";
@@ -14,34 +14,69 @@ import { Button } from "../ui/button";
 import { Eye } from "lucide-react";
 import { SoundContext } from "@/contexts/SoundContext";
 import { useGame } from '@/hooks/useGame';
-import { useUser } from "@/firebase";
+import { useUser, useFirestore } from "@/firebase";
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function Game() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  
+  const [hasSave, setHasSave] = useState(false);
+  const [isCheckingSave, setIsCheckingSave] = useState(true);
+
   const {
     resources,
     deck,
     currentCardIndex,
     gameState,
+    setGameState,
     gameOverMessage,
     lastEffects,
     year,
     storyFlags,
     prescienceCharges,
     isGameLoading,
-    hasSave,
     startGame,
     loadGame,
     handleChoice,
     handleCreatorIntervention,
     returnToTitle,
     deleteSave,
-  } = useGame(user);
+    tutorialCompleted, 
+    setTutorialCompleted
+  } = useGame(user, hasSave, setHasSave);
 
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const { bgmVolume } = useContext(SoundContext);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
+  const checkSave = useCallback(async () => {
+    if (!user || user.isAnonymous || !firestore) {
+      setHasSave(false);
+      setIsCheckingSave(false);
+      return;
+    }
+    setIsCheckingSave(true);
+    const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
+    try {
+      const docSnap = await getDoc(checkpointRef);
+      const saveExists = docSnap.exists();
+      setHasSave(saveExists);
+      if (saveExists) {
+        setTutorialCompleted(docSnap.data().tutorialCompleted || false);
+      }
+    } catch (error) {
+      console.error("Error checking for save file:", error);
+      setHasSave(false);
+    } finally {
+      setIsCheckingSave(false);
+    }
+  }, [user, firestore, setTutorialCompleted]);
+
+  useEffect(() => {
+    checkSave();
+  }, [user, checkSave]);
+
   useEffect(() => {
      if (!audioRef.current) {
       audioRef.current = new Audio('/assets/sounds/bgm.mp3');
@@ -67,7 +102,26 @@ export default function Game() {
   const cardText = currentCard ? getCardText(currentCard, resources) : "";
   const creatorCard = gameCards.find(c => c.id === 302);
   
-  if (isUserLoading || (user && gameState !== 'title' && isGameLoading)) {
+  const handleStart = () => {
+    startGame(tutorialCompleted);
+  }
+
+  const handleContinue = () => {
+    loadGame();
+  }
+
+  const handleDelete = async () => {
+    await deleteSave();
+    // After deleting, we might want to start a new game immediately or just stay on title.
+    // For now, stay on title screen.
+  }
+
+  const handleReturnToTitle = async () => {
+      await returnToTitle();
+      await checkSave(); // Re-check save status when returning to title
+  }
+  
+  if (isUserLoading || isCheckingSave || (user && gameState !== 'title' && isGameLoading)) {
     return (
         <div className="flex flex-col gap-6 h-[600px] w-full max-w-2xl items-center justify-center">
             <div className="w-full h-10" />
@@ -80,7 +134,7 @@ export default function Game() {
   }
 
   if (gameState === "title") {
-    return <TitleScreen onStart={startGame} onContinue={loadGame} hasSave={hasSave} onDeleteSave={deleteSave} gameState={gameState} />;
+    return <TitleScreen onStart={handleStart} onContinue={handleContinue} hasSave={hasSave} onDeleteSave={handleDelete} gameState={gameState} />;
   }
   
   if (gameState === "creator_intervention" && creatorCard) {
@@ -115,7 +169,7 @@ export default function Game() {
         )}
       </div>
       <p className="text-primary font-headline text-2xl h-8 transition-opacity duration-300" style={{opacity: gameState !== 'playing' || (currentCard?.id === 0 || currentCard?.id === 304) ? 0 : 1}}>Year {year}</p>
-      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={returnToTitle} year={year} />
+      <GameOverDialog isOpen={gameState === "gameover"} message={gameOverMessage} onRestart={handleReturnToTitle} year={year} />
        <div className="absolute bottom-4 right-4 flex items-center gap-4">
             {prescienceCharges > 0 && (
                 <div className="flex items-center gap-2 text-primary/80 animate-pulse">
@@ -131,3 +185,5 @@ export default function Game() {
     </div>
   );
 }
+
+    

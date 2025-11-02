@@ -48,7 +48,7 @@ const getRandomInt = (min: number, max: number) => {
 const storyFlagsToJSON = (flags: StoryFlags) => Array.from(flags);
 const storyFlagsFromJSON = (flags: StoryFlag[] | undefined) => new Set(flags || []);
 
-export const useGame = (user: User | null) => {
+export const useGame = (user: User | null, hasSave: boolean, setHasSave: (hasSave: boolean) => void) => {
   const [resources, setResources] = useState<Resources>({
     environment: INITIAL_RESOURCE_VALUE,
     people: INITIAL_RESOURCE_VALUE,
@@ -64,7 +64,6 @@ export const useGame = (user: User | null) => {
   const [storyFlags, setStoryFlags] = useState<StoryFlags>(new Set());
   const [prescienceCharges, setPrescienceCharges] = useState(0);
   const [isGameLoading, setGameLoading] = useState(true);
-  const [hasSave, setHasSave] = useState(false);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
   
   const [cardsPerYear, setCardsPerYear] = useState(getRandomInt(2, 5));
@@ -144,7 +143,7 @@ export const useGame = (user: User | null) => {
   }, [user, firestore]);
 
 
-  const startGame = useCallback((useFlags?: StoryFlags) => {
+  const startGame = useCallback((isTutorialCompleted: boolean, useFlags?: StoryFlags) => {
     setResources({
       environment: INITIAL_RESOURCE_VALUE,
       people: INITIAL_RESOURCE_VALUE,
@@ -158,7 +157,7 @@ export const useGame = (user: User | null) => {
     
     const flags = useFlags || new Set();
     
-    const includeTutorial = !tutorialCompleted && !flags.has('creator_github_mercy');
+    const includeTutorial = !isTutorialCompleted && !flags.has('creator_github_mercy');
     
     let initialDeck: CardData[] = [];
 
@@ -178,14 +177,13 @@ export const useGame = (user: User | null) => {
     setCardsPerYear(getRandomInt(2,5));
     setStoryFlags(flags);
     setPrescienceCharges(flags.has('creator_linkedin_prescience') ? 10 : 0);
-  }, [tutorialCompleted]);
+  }, []);
 
   const deleteSave = useCallback(async () => {
     if (user && firestore && !user.isAnonymous) {
       const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
       try {
         await deleteDoc(checkpointRef);
-        setHasSave(false); 
       } catch (serverError) {
          const permissionError = new FirestorePermissionError({
             path: checkpointRef.path,
@@ -195,7 +193,7 @@ export const useGame = (user: User | null) => {
       }
     }
      setHasSave(false);
-  }, [user, firestore]);
+  }, [user, firestore, setHasSave]);
 
   const loadGame = useCallback(async () => {
     if (!user || !firestore || user.isAnonymous) {
@@ -212,7 +210,7 @@ export const useGame = (user: User | null) => {
         if (!savedState.deckIds) {
             console.warn("Old save format detected. Deleting and starting new game.");
             await deleteSave();
-            startGame();
+            startGame(savedState.tutorialCompleted || false);
             return;
         }
         
@@ -233,7 +231,7 @@ export const useGame = (user: User | null) => {
         setGameOverMessage("");
       } else {
         setHasSave(false);
-        startGame();
+        startGame(tutorialCompleted);
       }
     } catch (serverError) {
         const permissionError = new FirestorePermissionError({
@@ -241,45 +239,11 @@ export const useGame = (user: User | null) => {
             operation: 'get',
         });
         errorEmitter.emit('permission-error', permissionError);
-        startGame();
+        startGame(tutorialCompleted);
     } finally {
         setGameLoading(false);
     }
-  }, [user, firestore, startGame, deleteSave]);
-
-  useEffect(() => {
-    const checkSave = async () => {
-      if (!user || user.isAnonymous || !firestore) {
-        setGameLoading(false);
-        setGameState('title');
-        setHasSave(false);
-        return;
-      }
-      setGameLoading(true);
-      const checkpointRef = doc(firestore, 'users', user.uid, 'checkpoints', 'main');
-      try {
-        const docSnap = await getDoc(checkpointRef);
-        const saveExists = docSnap.exists();
-        setHasSave(saveExists);
-        setTutorialCompleted(saveExists ? docSnap.data().tutorialCompleted || false : false);
-      } catch (error) {
-        const permissionError = new FirestorePermissionError({
-            path: checkpointRef.path,
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        setHasSave(false);
-      } finally {
-        setGameLoading(false);
-        if (gameState !== 'playing') {
-            setGameState('title');
-        }
-      }
-    };
-    if (gameState === 'title') {
-      checkSave();
-    }
-  }, [user, firestore, gameState]);
+  }, [user, firestore, startGame, deleteSave, setHasSave, tutorialCompleted]);
 
   useEffect(() => {
     if (gameState !== 'playing' || !user || user.isAnonymous) return;
@@ -374,8 +338,10 @@ export const useGame = (user: User | null) => {
 
 
   const handleChoice = useCallback((choice: Choice) => {
+    if (gameState !== 'playing') return;
+
     const currentCard = deck[currentCardIndex];
-    if (gameState !== 'playing' || !currentCard) return;
+    if (!currentCard) return;
 
     if (choice.action) choice.action();
 
@@ -410,7 +376,6 @@ export const useGame = (user: User | null) => {
     }
 
     setCardInYearCount(nextCardInYearCount);
-
     
     if (prescienceCharges > 0) {
       setPrescienceCharges(c => c - 1);
@@ -535,7 +500,6 @@ export const useGame = (user: User | null) => {
   }, [deck, currentCardIndex, gameState, storyFlags, resources, year, cardInYearCount, cardsPerYear, getNextCard, user, awardAchievements, deleteSave, recordScore, prescienceCharges, tutorialCompleted]);
 
   const returnToTitle = useCallback(async () => {
-    setHasSave(false);
     setGameState("title");
   },[]);
 
@@ -544,10 +508,10 @@ export const useGame = (user: User | null) => {
     deck,
     currentCardIndex,
     gameState,
+    setGameState,
     gameOverMessage,
     lastEffects,
     year,
-    hasSave,
     storyFlags,
     prescienceCharges,
     isGameLoading,
@@ -557,10 +521,9 @@ export const useGame = (user: User | null) => {
     handleCreatorIntervention,
     returnToTitle,
     deleteSave,
+    tutorialCompleted,
+    setTutorialCompleted,
   };
 };
-
-    
-    
 
     
